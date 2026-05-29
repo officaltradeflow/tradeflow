@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s  %(levelname)-8s  %(
 logger = logging.getLogger("ai_trader")
 
 # ── Config ────────────────────────────────────────────────────────────────────
-BASE_URL = "https://tradeflow.onrender.com"
+BASE_URL = "https://tradeflow-hjqr.onrender.com"
 
 AI_USERNAME = "tf_market_bot"
 AI_EMAIL    = "bot@tradeflow.internal"
