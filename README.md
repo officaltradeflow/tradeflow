@@ -81,21 +81,6 @@ python3 -c "import secrets; print(secrets.token_hex(32))"
 
 ---
 
-## 5. Admin Access
-
-The admin page is accessible by logging in with:
-- **Username:** `admin`
-- **Password:** `tradeflow_admin_2025`
-
-⚠️ **Change the admin password** before going live:
-1. Open `static/index.html`
-2. Find `const ADMIN_PASSWORD_HASH = 'tradeflow_admin_2025';`
-3. Change to a strong password
-4. In `app/api/routes/admin.py`, find `ADMIN_USERNAME = "admin"` and update if needed
-
-For production, create the admin user via the register endpoint and set `ADMIN_USERNAME` to match.
-
----
 
 ## 6. hCaptcha Setup (Free)
 
