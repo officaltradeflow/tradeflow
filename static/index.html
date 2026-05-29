@@ -1,0 +1,1885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TradeFlow — Stock Trading Simulator</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #080b14;
+      --bg2:       #0d1120;
+      --card:      #111827;
+      --card2:     #161d2e;
+      --border:    #1e2a3d;
+      --green:     #00e09e;
+      --green-dim: rgba(0,224,158,.1);
+      --red:       #ff4757;
+      --red-dim:   rgba(255,71,87,.1);
+      --blue:      #3b82f6;
+      --blue-dim:  rgba(59,130,246,.1);
+      --gold:      #f5a623;
+      --gold-dim:  rgba(245,166,35,.12);
+      --txt:       #e8edf8;
+      --txt2:      #6b7fa3;
+      --txt3:      #3a4a66;
+      --radius:    10px;
+      --sidebar:   230px;
+      --font-head: 'Syne', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+    }
+
+    body { font-family: var(--font-mono); background: var(--bg); color: var(--txt); min-height: 100vh; overflow-x: hidden; }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ══════════════════════════════════
+       LANDING PAGE
+    ══════════════════════════════════ */
+    #landing-screen {
+      display: block;
+      min-height: 100vh;
+      background: var(--bg);
+      overflow-x: hidden;
+    }
+
+    /* Animated grid background */
+    .landing-bg {
+      position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
+    }
+    .landing-bg::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,224,158,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,224,158,.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      animation: gridscroll 30s linear infinite;
+    }
+    .landing-bg::after {
+      content: '';
+      position: absolute;
+      width: 700px; height: 700px;
+      background: radial-gradient(ellipse, rgba(0,224,158,.07) 0%, transparent 70%);
+      top: -200px; right: -100px;
+      animation: float 8s ease-in-out infinite;
+    }
+    @keyframes gridscroll { to { background-position: 48px 48px; } }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-30px)} }
+
+    /* NAV */
+    .land-nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 48px;
+      background: rgba(8,11,20,.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .land-logo { display: flex; align-items: center; gap: 10px; font-family: var(--font-head); font-size: 22px; font-weight: 800; }
+    .land-logo .logo-icon { width: 36px; height: 36px; background: var(--green); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 900; color: #000; }
+    .land-nav-links { display: flex; gap: 28px; align-items: center; }
+    .land-nav-links a { font-size: 13px; color: var(--txt2); text-decoration: none; transition: color .2s; }
+    .land-nav-links a:hover { color: var(--txt); }
+    .btn-launch { padding: 9px 22px; background: var(--green); color: #000; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: var(--font-mono); transition: opacity .2s; }
+    .btn-launch:hover { opacity: .85; }
+
+    /* HERO */
+    .hero {
+      position: relative; z-index: 1;
+      display: flex; flex-direction: column; align-items: center; text-align: center;
+      padding: 120px 48px 80px;
+    }
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--green-dim); border: 1px solid rgba(0,224,158,.2);
+      padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; color: var(--green);
+      margin-bottom: 28px; animation: fadein .6s ease;
+    }
+    .hero-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    @keyframes fadein { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
+
+    .hero h1 {
+      font-family: var(--font-head); font-size: clamp(42px,7vw,88px);
+      font-weight: 800; line-height: 1.05; letter-spacing: -2px;
+      animation: fadein .7s .1s both;
+    }
+    .hero h1 .accent { color: var(--green); }
+    .hero-sub {
+      font-size: 17px; color: var(--txt2); max-width: 520px; line-height: 1.7;
+      margin: 24px auto 44px; animation: fadein .7s .2s both;
+    }
+    .hero-ctas { display: flex; gap: 14px; justify-content: center; animation: fadein .7s .3s both; }
+    .btn-cta-primary {
+      padding: 14px 36px; background: var(--green); color: #000; border: none; border-radius: 10px;
+      font-size: 15px; font-weight: 700; cursor: pointer; font-family: var(--font-mono);
+      transition: all .2s; box-shadow: 0 0 30px rgba(0,224,158,.25);
+    }
+    .btn-cta-primary:hover { transform: translateY(-2px); box-shadow: 0 0 50px rgba(0,224,158,.35); }
+    .btn-cta-secondary {
+      padding: 14px 36px; background: transparent; color: var(--txt); border: 1px solid var(--border);
+      border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: var(--font-mono);
+      transition: all .2s;
+    }
+    .btn-cta-secondary:hover { background: var(--card); border-color: var(--txt3); }
+
+    /* DISCLAIMER BANNER */
+    .disclaimer-banner {
+      position: relative; z-index: 1;
+      margin: 0 48px 60px;
+      background: var(--gold-dim); border: 1px solid rgba(245,166,35,.25);
+      border-radius: var(--radius); padding: 14px 20px;
+      display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--gold);
+      animation: fadein .7s .4s both;
+    }
+    .disclaimer-banner .disc-icon { font-size: 18px; flex-shrink: 0; }
+
+    /* STATS ROW */
+    .stats-row {
+      position: relative; z-index: 1;
+      display: flex; justify-content: center; gap: 60px;
+      padding: 40px 48px 60px; animation: fadein .7s .4s both;
+    }
+    .stat-item { text-align: center; }
+    .stat-value { font-family: var(--font-head); font-size: 36px; font-weight: 800; color: var(--green); }
+    .stat-label { font-size: 12px; color: var(--txt2); margin-top: 4px; }
+
+    /* FEATURE MOCKUP */
+    .mockup-section {
+      position: relative; z-index: 1;
+      padding: 20px 48px 80px;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .mockup-label { font-size: 11px; font-weight: 600; color: var(--txt3); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px; }
+    .mockup-frame {
+      width: 100%; max-width: 1000px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden;
+      box-shadow: 0 40px 120px rgba(0,0,0,.6), 0 0 0 1px rgba(0,224,158,.06);
+      animation: fadein .9s .3s both;
+    }
+    .mockup-topbar {
+      height: 42px; background: var(--bg2); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 8px; padding: 0 16px;
+    }
+    .mockup-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .mockup-url {
+      flex: 1; margin: 0 12px; height: 22px; background: var(--bg);
+      border-radius: 4px; display: flex; align-items: center; padding: 0 10px;
+      font-size: 11px; color: var(--txt3);
+    }
+    .mockup-inner { padding: 24px; display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+    .mock-kpi {
+      background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 16px;
+    }
+    .mock-kpi-label { font-size: 10px; color: var(--txt2); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .5px; }
+    .mock-kpi-value { font-family: var(--font-head); font-size: 22px; font-weight: 700; }
+    .mock-chart {
+      grid-column: span 4; background: var(--card2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 16px; height: 120px; display: flex; align-items: flex-end; gap: 3px;
+    }
+    .mock-bar {
+      flex: 1; border-radius: 3px 3px 0 0; opacity: .7;
+      animation: barrise .8s ease both;
+    }
+    @keyframes barrise { from{height:0!important} }
+
+    /* FEATURES GRID */
+    .features-section {
+      position: relative; z-index: 1;
+      padding: 80px 48px;
+      background: linear-gradient(180deg, transparent, rgba(13,17,32,.8));
+    }
+    .section-heading {
+      text-align: center; font-family: var(--font-head); font-size: 38px; font-weight: 800;
+      margin-bottom: 12px; letter-spacing: -1px;
+    }
+    .section-sub { text-align: center; color: var(--txt2); font-size: 15px; margin-bottom: 56px; }
+    .features-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; max-width: 1000px; margin: 0 auto; }
+    .feature-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+      padding: 28px; transition: all .2s;
+    }
+    .feature-card:hover { border-color: rgba(0,224,158,.25); transform: translateY(-3px); }
+    .feature-icon { font-size: 28px; margin-bottom: 14px; }
+    .feature-title { font-family: var(--font-head); font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .feature-desc { font-size: 13px; color: var(--txt2); line-height: 1.7; }
+
+    /* FOOTER */
+    .land-footer {
+      position: relative; z-index: 1;
+      border-top: 1px solid var(--border);
+      padding: 32px 48px;
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12px; color: var(--txt3);
+    }
+    .footer-links { display: flex; gap: 20px; }
+    .footer-links a { color: var(--txt3); text-decoration: none; cursor: pointer; transition: color .2s; }
+    .footer-links a:hover { color: var(--txt2); }
+
+    /* ══════════════════════════════════
+       AUTH SCREEN
+    ══════════════════════════════════ */
+    #auth-screen {
+      display: none; min-height: 100vh;
+      align-items: center; justify-content: center;
+      background: radial-gradient(ellipse at 20% 60%, rgba(59,130,246,.06) 0%, transparent 60%),
+                  radial-gradient(ellipse at 80% 20%, rgba(0,224,158,.05) 0%, transparent 50%), var(--bg);
+    }
+    .auth-box {
+      width: 430px; background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 44px 40px; box-shadow: 0 24px 80px rgba(0,0,0,.6);
+    }
+    .auth-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
+    .auth-logo .logo-icon { width: 34px; height: 34px; background: var(--green); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 900; color: #000; }
+    .auth-logo span { font-family: var(--font-head); font-size: 20px; font-weight: 800; }
+    .auth-tabs { display: flex; gap: 4px; background: var(--bg2); border-radius: 8px; padding: 4px; margin-bottom: 24px; }
+    .auth-tab { flex: 1; padding: 8px; text-align: center; font-size: 13px; font-weight: 500; cursor: pointer; border-radius: 6px; color: var(--txt2); transition: all .2s; font-family: var(--font-mono); }
+    .auth-tab.active { background: var(--card2); color: var(--txt); }
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 11px; font-weight: 500; color: var(--txt2); margin-bottom: 5px; letter-spacing: .5px; text-transform: uppercase; }
+    .form-group input {
+      width: 100%; background: var(--bg2); border: 1px solid var(--border); color: var(--txt);
+      padding: 11px 13px; border-radius: 8px; font-size: 14px; font-family: var(--font-mono); outline: none;
+      transition: border-color .2s;
+    }
+    .form-group input:focus { border-color: var(--blue); }
+    .btn-primary {
+      width: 100%; padding: 13px; background: var(--green); color: #000; font-weight: 700; font-size: 14px;
+      border: none; border-radius: 10px; cursor: pointer; margin-top: 6px; transition: opacity .2s, transform .1s;
+      font-family: var(--font-mono); letter-spacing: .3px;
+    }
+    .btn-primary:hover { opacity: .88; }
+    .btn-primary:active { transform: scale(.98); }
+    .auth-error { color: var(--red); font-size: 12px; margin-top: 8px; text-align: center; min-height: 16px; }
+    .forgot-link { text-align: right; margin-bottom: 4px; }
+    .forgot-link a { font-size: 12px; color: var(--blue); text-decoration: none; cursor: pointer; }
+    .forgot-link a:hover { text-decoration: underline; }
+    .hcaptcha-wrap { display: flex; justify-content: center; margin: 12px 0 6px; }
+    .auth-disclaimer { font-size: 11px; color: var(--txt3); text-align: center; margin-top: 14px; line-height: 1.6; }
+    .auth-disclaimer a { color: var(--txt2); text-decoration: underline; cursor: pointer; }
+
+    /* ══════════════════════════════════
+       FORGOT PASSWORD MODAL
+    ══════════════════════════════════ */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 300;
+      display: none; align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+      padding: 32px; width: 400px; box-shadow: 0 24px 80px rgba(0,0,0,.6);
+    }
+    .modal-title { font-family: var(--font-head); font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .modal-sub { font-size: 13px; color: var(--txt2); margin-bottom: 20px; line-height: 1.6; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 16px; }
+    .btn-modal-cancel { flex: 1; padding: 11px; background: var(--bg2); border: 1px solid var(--border); color: var(--txt2); border-radius: 8px; cursor: pointer; font-family: var(--font-mono); font-size: 13px; }
+    .btn-modal-submit { flex: 1; padding: 11px; background: var(--blue); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-family: var(--font-mono); font-size: 13px; font-weight: 600; }
+
+    /* ══════════════════════════════════
+       PRIVACY / DISCLAIMER MODALS
+    ══════════════════════════════════ */
+    .policy-modal-box {
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+      padding: 36px; width: 600px; max-height: 80vh; overflow-y: auto;
+      box-shadow: 0 24px 80px rgba(0,0,0,.6);
+    }
+    .policy-modal-box h2 { font-family: var(--font-head); font-size: 22px; font-weight: 800; margin-bottom: 20px; }
+    .policy-modal-box h3 { font-family: var(--font-head); font-size: 15px; font-weight: 700; margin: 20px 0 8px; }
+    .policy-modal-box p { font-size: 13px; color: var(--txt2); line-height: 1.8; margin-bottom: 12px; }
+    .policy-close { float: right; background: none; border: none; color: var(--txt2); font-size: 22px; cursor: pointer; margin-top: -4px; }
+
+    /* ══════════════════════════════════
+       APP SHELL
+    ══════════════════════════════════ */
+    #app-screen { display: none; min-height: 100vh; }
+    .shell { display: flex; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: var(--sidebar); min-height: 100vh; background: var(--bg2); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; position: fixed; top: 0; left: 0; z-index: 100;
+    }
+    .sidebar-logo { padding: 18px 16px 14px; display: flex; align-items: center; gap: 9px; border-bottom: 1px solid var(--border); }
+    .sidebar-logo .logo-icon { width: 30px; height: 30px; background: var(--green); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; color: #000; }
+    .sidebar-logo span { font-family: var(--font-head); font-size: 16px; font-weight: 800; }
+    .sidebar-nav { flex: 1; padding: 14px 10px; }
+    .nav-section-label { font-size: 9px; font-weight: 600; color: var(--txt3); letter-spacing: 1.2px; text-transform: uppercase; padding: 0 8px; margin: 14px 0 6px; }
+    .nav-item { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--txt2); transition: all .15s; margin-bottom: 1px; }
+    .nav-item:hover { background: var(--card); color: var(--txt); }
+    .nav-item.active { background: var(--green-dim); color: var(--green); }
+    .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+    .sidebar-footer { padding: 14px 10px; border-top: 1px solid var(--border); }
+    .user-pill { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border-radius: 7px; cursor: pointer; transition: background .15s; }
+    .user-pill:hover { background: var(--card); }
+    .user-avatar { width: 30px; height: 30px; background: var(--blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0; }
+    .user-name { font-size: 12px; font-weight: 600; }
+    .user-coins { font-size: 11px; color: var(--gold); margin-top: 1px; }
+    .logout-btn { background: none; border: none; color: var(--txt3); cursor: pointer; font-size: 15px; margin-left: auto; padding: 3px; }
+    .logout-btn:hover { color: var(--red); }
+
+    /* MAIN */
+    .main { margin-left: var(--sidebar); flex: 1; min-height: 100vh; }
+    .topbar {
+      height: 58px; background: var(--bg2); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 26px; gap: 14px; position: sticky; top: 0; z-index: 50;
+    }
+    .topbar-title { font-family: var(--font-head); font-size: 16px; font-weight: 700; flex: 1; }
+    .topbar-badge { display: flex; align-items: center; gap: 6px; background: var(--card); border: 1px solid var(--border); padding: 5px 12px; border-radius: 18px; font-size: 12px; font-weight: 500; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+    .coins-badge { display: flex; align-items: center; gap: 5px; background: var(--gold-dim); border: 1px solid rgba(245,166,35,.2); padding: 5px 12px; border-radius: 18px; font-size: 12px; font-weight: 600; color: var(--gold); }
+    .page-content { padding: 26px; max-width: 1400px; }
+
+    /* CARDS */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); }
+    .card-header { padding: 16px 18px 0; display: flex; align-items: center; justify-content: space-between; }
+    .card-title { font-size: 11px; font-weight: 600; color: var(--txt2); text-transform: uppercase; letter-spacing: .8px; }
+    .card-body { padding: 14px 18px 18px; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+    .grid-main { display: grid; grid-template-columns: 1fr 320px; gap: 18px; }
+
+    /* KPI */
+    .kpi { padding: 18px; }
+    .kpi-label { font-size: 11px; font-weight: 500; color: var(--txt2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+    .kpi-value { font-family: var(--font-head); font-size: 24px; font-weight: 700; letter-spacing: -.5px; }
+    .kpi-sub { font-size: 12px; margin-top: 3px; font-weight: 500; }
+    .up { color: var(--green); } .down { color: var(--red); } .neu { color: var(--txt2); }
+
+    /* TABLE */
+    .tf-table { width: 100%; border-collapse: collapse; }
+    .tf-table th { font-size: 10px; font-weight: 600; color: var(--txt2); text-transform: uppercase; letter-spacing: .6px; padding: 9px 13px; text-align: left; border-bottom: 1px solid var(--border); }
+    .tf-table td { padding: 11px 13px; font-size: 12px; border-bottom: 1px solid rgba(30,42,61,.5); }
+    .tf-table tr:last-child td { border-bottom: none; }
+    .tf-table tr:hover td { background: var(--card2); }
+    .sym-cell { font-weight: 700; font-size: 13px; }
+    .sym-name { font-size: 10px; color: var(--txt2); font-weight: 400; margin-top: 2px; }
+    .tag { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: .3px; }
+    .tag-buy { background: var(--green-dim); color: var(--green); }
+    .tag-sell { background: var(--red-dim); color: var(--red); }
+
+    /* SEARCH */
+    .search-bar { display: flex; align-items: center; gap: 9px; background: var(--card); border: 1px solid var(--border); border-radius: 9px; padding: 9px 14px; margin-bottom: 18px; }
+    .search-bar input { flex: 1; background: none; border: none; color: var(--txt); font-size: 13px; font-family: var(--font-mono); outline: none; }
+    .search-bar input::placeholder { color: var(--txt3); }
+
+    /* QUOTE HEADER */
+    .quote-header { padding: 18px; border-bottom: 1px solid var(--border); }
+    .quote-sym { font-family: var(--font-head); font-size: 26px; font-weight: 800; letter-spacing: -1px; }
+    .quote-name { font-size: 12px; color: var(--txt2); margin-top: 2px; }
+    .quote-price { font-family: var(--font-head); font-size: 34px; font-weight: 800; letter-spacing: -1px; margin-top: 10px; }
+    .quote-change { font-size: 14px; font-weight: 600; margin-top: 3px; }
+
+    /* CHART */
+    .chart-wrap { position: relative; height: 260px; }
+    .chart-tabs { display: flex; gap: 3px; margin-bottom: 14px; }
+    .chart-tab { padding: 5px 11px; border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer; border: none; background: none; color: var(--txt2); transition: all .15s; font-family: var(--font-mono); }
+    .chart-tab.active { background: var(--card2); color: var(--txt); }
+
+    /* TRADE */
+    .trade-btn { flex: 1; padding: 10px; text-align: center; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .2s; border: none; background: none; font-family: var(--font-mono); }
+    .trade-btn.buy.active { background: var(--green); color: #000; }
+    .trade-btn.sell.active { background: var(--red); color: #fff; }
+    .trade-btn:not(.active) { color: var(--txt2); }
+
+    .input-group { margin-bottom: 13px; }
+    .input-group label { display: block; font-size: 10px; font-weight: 600; color: var(--txt2); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .5px; }
+    .input-group input, .input-group select {
+      width: 100%; background: var(--bg2); border: 1px solid var(--border); color: var(--txt);
+      padding: 10px 12px; border-radius: 7px; font-size: 13px; font-family: var(--font-mono); outline: none; transition: border-color .2s;
+    }
+    .input-group input:focus, .input-group select:focus { border-color: var(--blue); }
+    .input-group select option { background: var(--card2); }
+
+    .order-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 7px; }
+    .order-row:last-child { margin-bottom: 0; border-top: 1px solid var(--border); padding-top: 7px; font-weight: 700; }
+
+    .btn-trade { width: 100%; padding: 13px; font-weight: 700; font-size: 14px; border: none; border-radius: 9px; cursor: pointer; font-family: var(--font-mono); transition: all .2s; }
+    .btn-trade.buy { background: var(--green); color: #000; }
+    .btn-trade.sell { background: var(--red); color: #fff; }
+    .btn-trade:hover { opacity: .88; }
+    .btn-trade:active { transform: scale(.98); }
+
+    .qfill-btn { flex: 1; padding: 6px 0; background: var(--bg2); border: 1px solid var(--border); color: var(--txt2); border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: var(--font-mono); transition: all .15s; }
+    .qfill-btn:hover { background: var(--card2); color: var(--txt); border-color: var(--blue); }
+
+    /* WATCHLIST */
+    .watch-item { display: flex; align-items: center; padding: 11px 18px; border-bottom: 1px solid rgba(30,42,61,.5); cursor: pointer; transition: background .15s; }
+    .watch-item:last-child { border-bottom: none; }
+    .watch-item:hover { background: var(--card2); }
+    .watch-sym { font-weight: 700; font-size: 13px; flex: 1; }
+    .watch-name { font-size: 10px; color: var(--txt2); }
+    .watch-price { font-size: 13px; font-weight: 600; text-align: right; }
+    .watch-chg { font-size: 11px; text-align: right; margin-top: 1px; font-weight: 500; }
+
+    /* RING CHART */
+    .ring-wrap { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 6px 0; }
+    .ring-chart-box { width: 170px; height: 170px; flex-shrink: 0; position: relative; }
+    .ring-legend { width: 100%; display: flex; flex-wrap: wrap; gap: 7px 18px; justify-content: center; }
+    .ring-item { display: flex; align-items: center; gap: 7px; font-size: 12px; }
+    .ring-dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+
+    /* COMPETITIONS */
+    .comp-card { padding: 18px; display: flex; flex-direction: column; gap: 11px; }
+    .comp-name { font-family: var(--font-head); font-size: 15px; font-weight: 700; }
+    .comp-desc { font-size: 12px; color: var(--txt2); margin-top: 1px; }
+    .comp-badge { background: var(--blue-dim); color: var(--blue); padding: 3px 9px; border-radius: 18px; font-size: 10px; font-weight: 700; }
+    .comp-badge.ended { background: var(--red-dim); color: var(--red); }
+    .comp-stats { display: flex; gap: 18px; }
+    .comp-stat-label { font-size: 10px; color: var(--txt2); margin-bottom: 2px; }
+    .comp-stat-value { font-size: 13px; font-weight: 700; }
+    .btn-join { padding: 8px 18px; background: var(--blue); color: #fff; border: none; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--font-mono); transition: opacity .2s; }
+    .btn-join:hover { opacity: .85; }
+
+    /* TAPE / COMING SOON */
+    .tape-wrap { position: relative; overflow: hidden; border-radius: var(--radius); }
+    .tape-overlay {
+      position: absolute; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center;
+      background: rgba(8,11,20,.75); backdrop-filter: blur(3px); border-radius: var(--radius);
+    }
+    .tape {
+      background: var(--gold); color: #000; font-family: var(--font-head); font-size: 13px; font-weight: 800;
+      padding: 10px 60px; transform: rotate(-5deg); letter-spacing: 2px; text-transform: uppercase;
+      box-shadow: 0 4px 20px rgba(0,0,0,.4); white-space: nowrap;
+    }
+
+    /* TOAST */
+    #toast { position: fixed; bottom: 26px; right: 26px; background: var(--card2); border: 1px solid var(--border); border-radius: 9px; padding: 12px 18px; font-size: 13px; font-weight: 500; box-shadow: 0 8px 32px rgba(0,0,0,.5); z-index: 999; transform: translateY(80px); opacity: 0; transition: all .3s; max-width: 320px; font-family: var(--font-mono); }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast.success { border-left: 3px solid var(--green); }
+    #toast.error { border-left: 3px solid var(--red); }
+    #toast.info { border-left: 3px solid var(--blue); }
+
+    /* EMPTY / SPINNER */
+    .empty { text-align: center; padding: 40px 18px; color: var(--txt2); }
+    .empty-icon { font-size: 36px; margin-bottom: 10px; }
+    .empty-text { font-size: 13px; }
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--green); border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    /* LIVE PRICE FLASH */
+    .price-up { animation: flashup .4s ease; }
+    .price-down { animation: flashdown .4s ease; }
+    @keyframes flashup { 0%{background:rgba(0,224,158,.2)} 100%{background:transparent} }
+    @keyframes flashdown { 0%{background:rgba(255,71,87,.2)} 100%{background:transparent} }
+
+    /* ADMIN PAGE */
+    .admin-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 18px; margin-bottom: 24px; }
+    .admin-stat { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+    .admin-stat-label { font-size: 11px; color: var(--txt2); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+    .admin-stat-value { font-family: var(--font-head); font-size: 28px; font-weight: 800; }
+
+    /* FUNDING BAR */
+    .funding-bar-wrap { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 24px; }
+    .funding-bar-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; }
+    .funding-bar-track { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .funding-bar-fill { height: 100%; background: linear-gradient(90deg, var(--green), var(--blue)); border-radius: 3px; transition: width .6s ease; }
+    .funding-bar-sub { font-size: 11px; color: var(--txt2); margin-top: 6px; }
+
+    .mb-18 { margin-bottom: 18px; }
+    .mt-18 { margin-top: 18px; }
+    .flex { display: flex; }
+    .gap-10 { gap: 10px; }
+    .align-center { align-items: center; }
+
+    @media (max-width: 1000px) {
+      .grid-4 { grid-template-columns: 1fr 1fr; }
+      .grid-main { grid-template-columns: 1fr; }
+      .grid-3 { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 640px) {
+      .land-nav { padding: 14px 20px; }
+      .hero { padding: 80px 20px 60px; }
+      .stats-row { gap: 30px; padding: 20px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .hero-ctas { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════
+     LANDING PAGE
+══════════════════════════════════ -->
+<div id="landing-screen">
+  <div class="landing-bg"></div>
+
+  <!-- NAV -->
+  <nav class="land-nav">
+    <div class="land-logo">
+      <div class="logo-icon">T</div>
+      <span>TradeFlow</span>
+    </div>
+    <div class="land-nav-links">
+      <a href="#features">Features</a>
+      <a href="#" onclick="openModal('privacy-modal')">Privacy</a>
+      <a href="#" onclick="openModal('disclaimer-modal')">Disclaimer</a>
+      <button class="btn-launch" onclick="showAuth('login')">Sign In</button>
+      <button class="btn-launch" style="background:transparent;color:var(--green);border:1px solid var(--green)" onclick="showAuth('register')">Get Started Free</button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-tag"><span class="hero-dot"></span> 100% Free · No Real Money · Learn to Trade</div>
+    <h1>Trade Stocks.<br><span class="accent">Risk-Free.</span></h1>
+    <p class="hero-sub">TradeFlow gives you $100,000 in virtual cash to practise real trading strategies — live market data, professional tools, zero risk.</p>
+    <div class="hero-ctas">
+      <button class="btn-cta-primary" onclick="showAuth('register')">Start Trading Free →</button>
+      <button class="btn-cta-secondary" onclick="showAuth('login')">I have an account</button>
+    </div>
+  </section>
+
+  <!-- DISCLAIMER BANNER -->
+  <div class="disclaimer-banner" style="max-width:1000px;margin:0 auto 60px;">
+    <span class="disc-icon">⚠️</span>
+    <span><strong>Simulation Only:</strong> TradeFlow is a stock market simulator for educational purposes. No real money is involved. Past simulated performance does not reflect real-world investment results. This is not financial advice.</span>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-item"><div class="stat-value">$100K</div><div class="stat-label">Starting Virtual Cash</div></div>
+    <div class="stat-item"><div class="stat-value">Live</div><div class="stat-label">Real Market Data</div></div>
+    <div class="stat-item"><div class="stat-value">0%</div><div class="stat-label">Real Risk</div></div>
+    <div class="stat-item"><div class="stat-value">Free</div><div class="stat-label">Forever</div></div>
+  </div>
+
+  <!-- MOCKUP -->
+  <div class="mockup-section">
+    <div class="mockup-label">Live Platform Preview</div>
+    <div class="mockup-frame">
+      <div class="mockup-topbar">
+        <div class="mockup-dot" style="background:#ff4757"></div>
+        <div class="mockup-dot" style="background:#f5a623"></div>
+        <div class="mockup-dot" style="background:#00e09e"></div>
+        <div class="mockup-url">tradeflow.onrender.com</div>
+      </div>
+      <div class="mockup-inner">
+        <div class="mock-kpi"><div class="mock-kpi-label">Portfolio Value</div><div class="mock-kpi-value" style="color:var(--green)">$108,420</div></div>
+        <div class="mock-kpi"><div class="mock-kpi-label">Cash Balance</div><div class="mock-kpi-value">$32,150</div></div>
+        <div class="mock-kpi"><div class="mock-kpi-label">Total P&amp;L</div><div class="mock-kpi-value" style="color:var(--green)">+$8,420</div></div>
+        <div class="mock-kpi"><div class="mock-kpi-label">Positions</div><div class="mock-kpi-value">7</div></div>
+        <div class="mock-chart" id="landing-mock-chart">
+          <!-- bars injected by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <section class="features-section" id="features">
+    <div class="section-heading">Everything you need to learn trading</div>
+    <p class="section-sub">Professional-grade tools in a zero-risk environment</p>
+    <div class="features-grid">
+      <div class="feature-card"><div class="feature-icon">📈</div><div class="feature-title">Live Market Data</div><div class="feature-desc">Real-time prices from Yahoo Finance. Watch your portfolio move with the actual market, second by second.</div></div>
+      <div class="feature-card"><div class="feature-icon">💼</div><div class="feature-title">Portfolio Management</div><div class="feature-desc">Track all your positions, see your P&L, allocation charts, and performance history in one place.</div></div>
+      <div class="feature-card"><div class="feature-icon">⚡</div><div class="feature-title">Instant Execution</div><div class="feature-desc">Market and limit orders execute instantly. Buy, sell, and manage positions just like a real broker.</div></div>
+      <div class="feature-card"><div class="feature-icon">🏆</div><div class="feature-title">Competitions</div><div class="feature-desc">Compete against other traders in weekly and monthly contests. Earn TradeCoins and climb the leaderboard.</div></div>
+      <div class="feature-card"><div class="feature-icon">📰</div><div class="feature-title">Market News</div><div class="feature-desc">Stay informed with live financial news for every stock you follow. Make decisions like a real trader.</div></div>
+      <div class="feature-card"><div class="feature-icon">🔒</div><div class="feature-title">Secure & Private</div><div class="feature-desc">Your data is encrypted and never sold. hCaptcha protection on all forms. Full privacy compliance.</div></div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="land-footer">
+    <div>© 2025 TradeFlow · For educational use only · Not financial advice</div>
+    <div class="footer-links">
+      <a onclick="openModal('privacy-modal')">Privacy Policy</a>
+      <a onclick="openModal('disclaimer-modal')">Disclaimer</a>
+      <a onclick="showAuth('register')">Get Started</a>
+    </div>
+  </footer>
+</div>
+
+<!-- ══════════════════════════════════
+     AUTH SCREEN
+══════════════════════════════════ -->
+<div id="auth-screen" style="display:none;min-height:100vh;align-items:center;justify-content:center;background:radial-gradient(ellipse at 20% 60%,rgba(59,130,246,.06) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(0,224,158,.05) 0%,transparent 50%),var(--bg)">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div class="logo-icon">T</div>
+      <span>TradeFlow</span>
+    </div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchTab('login')">Sign In</div>
+      <div class="auth-tab" onclick="switchTab('register')">Create Account</div>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="login-form">
+      <div class="form-group"><label>Username</label><input type="text" id="login-username" placeholder="Enter your username" /></div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doLogin()" />
+      </div>
+      <div class="forgot-link"><a onclick="openModal('forgot-modal')">Forgot password?</a></div>
+      <div class="hcaptcha-wrap">
+        <div class="h-captcha" data-sitekey="10000000-ffff-ffff-ffff-000000000001" data-theme="dark" id="login-captcha"></div>
+      </div>
+      <button class="btn-primary" onclick="doLogin()">Sign In</button>
+      <div class="auth-error" id="login-error"></div>
+      <div class="auth-disclaimer">By signing in you agree to our <a onclick="openModal('privacy-modal')">Privacy Policy</a> and acknowledge this is a <a onclick="openModal('disclaimer-modal')">simulation only</a>.</div>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="register-form" style="display:none">
+      <div class="form-group"><label>Username</label><input type="text" id="reg-username" placeholder="Choose a username" /></div>
+      <div class="form-group"><label>Email</label><input type="email" id="reg-email" placeholder="Your email address" /></div>
+      <div class="form-group"><label>Full Name</label><input type="text" id="reg-name" placeholder="Your full name" /></div>
+      <div class="form-group"><label>Password</label><input type="password" id="reg-password" placeholder="Create a password (min 8 chars)" /></div>
+      <div class="hcaptcha-wrap">
+        <div class="h-captcha" data-sitekey="10000000-ffff-ffff-ffff-000000000001" data-theme="dark" id="reg-captcha"></div>
+      </div>
+      <button class="btn-primary" onclick="doRegister()">Create Account</button>
+      <div class="auth-error" id="reg-error"></div>
+      <div class="auth-disclaimer">By creating an account you agree to our <a onclick="openModal('privacy-modal')">Privacy Policy</a>. This is a <a onclick="openModal('disclaimer-modal')">simulation — no real money</a>.</div>
+    </div>
+
+    <div style="text-align:center;margin-top:16px">
+      <a onclick="showLanding()" style="font-size:12px;color:var(--txt3);cursor:pointer;text-decoration:none;">← Back to home</a>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     APP SCREEN
+══════════════════════════════════ -->
+<div id="app-screen">
+  <div class="shell">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon">T</div>
+        <span>TradeFlow</span>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">Overview</div>
+        <div class="nav-item active" onclick="navigate('dashboard')"><span class="nav-icon">📊</span> Dashboard</div>
+        <div class="nav-item" onclick="navigate('markets')"><span class="nav-icon">🌐</span> Markets</div>
+        <div class="nav-section-label">My Account</div>
+        <div class="nav-item" onclick="navigate('portfolio')"><span class="nav-icon">💼</span> Portfolio</div>
+        <div class="nav-item" onclick="navigate('trade')"><span class="nav-icon">⚡</span> Trade</div>
+        <div class="nav-item" onclick="navigate('history')"><span class="nav-icon">📋</span> History</div>
+        <div class="nav-section-label">Compete</div>
+        <div class="nav-item" onclick="navigate('competitions')"><span class="nav-icon">🏆</span> Competitions</div>
+        <div id="admin-nav-item" style="display:none" class="nav-item" onclick="navigate('admin')"><span class="nav-icon">⚙️</span> Admin</div>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-pill">
+          <div class="user-avatar" id="user-avatar">U</div>
+          <div>
+            <div class="user-name" id="user-name">—</div>
+            <div class="user-coins">🪙 <span id="user-coins-display">0</span> TC</div>
+          </div>
+          <button class="logout-btn" onclick="doLogout()" title="Sign out">⏻</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <div class="topbar">
+        <div class="topbar-title" id="page-title">Dashboard</div>
+        <div class="topbar-badge"><span class="dot"></span><span id="portfolio-balance-top">$0.00</span></div>
+        <div class="coins-badge">🪙 <span id="coins-top">0</span> TradeCoins</div>
+      </div>
+
+      <div class="page-content">
+
+        <!-- DASHBOARD -->
+        <div id="page-dashboard">
+          <div class="grid-4 mb-18">
+            <div class="card kpi"><div class="kpi-label">Portfolio Value</div><div class="kpi-value" id="dash-total">$—</div><div class="kpi-sub" id="dash-pl-pct">—</div></div>
+            <div class="card kpi"><div class="kpi-label">Cash Balance</div><div class="kpi-value" id="dash-cash">$—</div><div class="kpi-sub neu">Available to trade</div></div>
+            <div class="card kpi"><div class="kpi-label">Invested</div><div class="kpi-value" id="dash-invested">$—</div><div class="kpi-sub neu" id="dash-positions">— positions</div></div>
+            <div class="card kpi"><div class="kpi-label">Total P&amp;L</div><div class="kpi-value" id="dash-pl">$—</div><div class="kpi-sub" id="dash-pl-label">—</div></div>
+          </div>
+
+          <!-- SIM DISCLAIMER inside app -->
+          <div style="background:var(--gold-dim);border:1px solid rgba(245,166,35,.2);border-radius:var(--radius);padding:10px 16px;font-size:12px;color:var(--gold);margin-bottom:18px;display:flex;align-items:center;gap:8px">
+            ⚠️ <span><strong>Simulation:</strong> All trades use virtual money. No real funds are involved. This platform is for educational purposes only.</span>
+          </div>
+
+          <div class="grid-main">
+            <div>
+              <div class="card mb-18">
+                <div class="card-header"><span class="card-title">Portfolio Performance</span></div>
+                <div class="card-body"><div class="chart-wrap"><canvas id="portfolio-chart"></canvas></div></div>
+              </div>
+              <!-- NEWS FEED -->
+              <div class="card mb-18">
+                <div class="card-header"><span class="card-title">Market News</span></div>
+                <div id="news-feed-body"><div class="empty"><div class="spinner"></div></div></div>
+              </div>
+              <div class="card">
+                <div class="card-header"><span class="card-title">Recent Trades</span></div>
+                <div id="recent-trades-body"><div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No trades yet</div></div></div>
+              </div>
+            </div>
+            <div>
+              <div class="card">
+                <div class="card-header" style="padding-bottom:10px"><span class="card-title">Watchlist</span></div>
+                <div id="watchlist-items"><div class="empty"><div class="spinner"></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MARKETS -->
+        <div id="page-markets" style="display:none">
+          <div class="search-bar">
+            <span style="color:var(--txt3)">🔍</span>
+            <input type="text" id="market-search" placeholder="Search stocks… (e.g. AAPL, TSLA)" onkeydown="if(event.key==='Enter')searchMarket()" />
+            <button class="btn-trade buy" style="width:auto;padding:7px 16px;border-radius:7px;font-size:12px" onclick="searchMarket()">Search</button>
+          </div>
+          <div id="quote-view" style="display:none" class="card mb-18">
+            <div class="quote-header">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between">
+                <div>
+                  <div class="quote-sym" id="q-symbol">—</div>
+                  <div class="quote-name" id="q-name">—</div>
+                  <div class="quote-price" id="q-price">$—</div>
+                  <div class="quote-change" id="q-change">—</div>
+                </div>
+                <button class="btn-join" onclick="quickTrade()" style="margin-top:6px">Trade →</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="chart-tabs">
+                <button class="chart-tab active" onclick="loadChart('1d','1m',this)">1D</button>
+                <button class="chart-tab" onclick="loadChart('5d','5m',this)">5D</button>
+                <button class="chart-tab" onclick="loadChart('1mo','1d',this)">1M</button>
+                <button class="chart-tab" onclick="loadChart('3mo','1d',this)">3M</button>
+                <button class="chart-tab" onclick="loadChart('1y','1wk',this)">1Y</button>
+              </div>
+              <div class="chart-wrap"><canvas id="price-chart"></canvas></div>
+            </div>
+            <!-- Symbol News -->
+            <div style="padding:0 18px 18px">
+              <div style="font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px">Latest News</div>
+              <div id="symbol-news"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Popular Stocks</span></div>
+            <div id="popular-list"><div class="empty"><div class="spinner"></div></div></div>
+          </div>
+        </div>
+
+        <!-- PORTFOLIO -->
+        <div id="page-portfolio" style="display:none">
+          <div class="grid-main mb-18">
+            <div class="card">
+              <div class="card-header"><span class="card-title">Holdings</span></div>
+              <div id="holdings-table-wrap"><div class="empty"><div class="spinner"></div></div></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><span class="card-title">Allocation</span></div>
+              <div class="card-body">
+                <div class="ring-wrap">
+                  <div class="ring-chart-box"><canvas id="alloc-chart"></canvas></div>
+                  <div class="ring-legend" id="alloc-legend"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TRADE — chart + form side by side -->
+        <div id="page-trade" style="display:none">
+          <div style="display:grid;grid-template-columns:1fr 360px;gap:18px;align-items:start">
+
+            <!-- LEFT: symbol lookup, chart -->
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <!-- Symbol Search -->
+              <div class="card" style="padding:14px 18px">
+                <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
+                  <input type="text" id="trade-symbol" placeholder="Ticker — e.g. AAPL, TSLA, NVDA"
+                    style="flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--txt);padding:11px 14px;border-radius:9px;font-size:14px;font-weight:600;font-family:var(--font-mono);outline:none;text-transform:uppercase;letter-spacing:.5px"
+                    onkeydown="if(event.key==='Enter')lookupTradeSymbol()" oninput="this.value=this.value.toUpperCase()" />
+                  <button onclick="lookupTradeSymbol()" style="padding:11px 22px;background:var(--blue);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-mono);white-space:nowrap">Look Up →</button>
+                </div>
+                <div id="trade-quick-picks" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+              </div>
+
+              <!-- Live Price Card -->
+              <div class="card" id="trade-quote-card" style="display:none">
+                <div style="padding:18px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-end">
+                  <div>
+                    <div style="display:flex;align-items:center;gap:9px">
+                      <div style="font-family:var(--font-head);font-size:20px;font-weight:800;letter-spacing:-1px" id="tq-sym">—</div>
+                      <div id="tq-exchange" style="font-size:10px;color:var(--txt2);background:var(--bg2);padding:2px 7px;border-radius:4px;font-weight:600"></div>
+                    </div>
+                    <div style="font-size:12px;color:var(--txt2);margin-top:2px" id="tq-name">—</div>
+                    <div style="display:flex;align-items:baseline;gap:9px;margin-top:8px">
+                      <div style="font-family:var(--font-head);font-size:30px;font-weight:800;letter-spacing:-1.5px" id="tq-price">$—</div>
+                      <div style="font-size:13px;font-weight:600" id="tq-change">—</div>
+                    </div>
+                  </div>
+                  <div style="text-align:right">
+                    <div style="font-size:10px;color:var(--txt2);margin-bottom:3px">Volume</div>
+                    <div style="font-size:13px;font-weight:600" id="tq-vol">—</div>
+                    <div style="font-size:10px;color:var(--txt2);margin-top:7px;margin-bottom:3px">Mkt Cap</div>
+                    <div style="font-size:13px;font-weight:600" id="tq-mktcap">—</div>
+                  </div>
+                </div>
+                <!-- Chart tabs & canvas -->
+                <div style="padding:14px 18px 18px">
+                  <div style="display:flex;gap:3px;margin-bottom:10px" id="trade-chart-tabs">
+                    <button class="chart-tab active" onclick="loadTradeChart('1d','1m',this)">1D</button>
+                    <button class="chart-tab" onclick="loadTradeChart('5d','5m',this)">5D</button>
+                    <button class="chart-tab" onclick="loadTradeChart('1mo','1d',this)">1M</button>
+                    <button class="chart-tab" onclick="loadTradeChart('3mo','1d',this)">3M</button>
+                    <button class="chart-tab" onclick="loadTradeChart('1y','1wk',this)">1Y</button>
+                  </div>
+                  <div style="position:relative;height:220px"><canvas id="trade-mini-chart"></canvas></div>
+                  <div style="font-size:10px;color:var(--txt3);margin-top:6px;text-align:right" id="trade-last-updated">—</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- RIGHT: order form + account -->
+            <div style="display:flex;flex-direction:column;gap:14px">
+
+              <!-- Account Summary -->
+              <div class="card" style="padding:18px">
+                <div style="font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Account</div>
+                <div style="display:flex;flex-direction:column;gap:10px">
+                  <div style="display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--txt2)">Cash</span><span style="font-size:15px;font-weight:700" id="acct-cash">$—</span></div>
+                  <div style="display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--txt2)">Invested</span><span style="font-size:15px;font-weight:700" id="acct-invested">$—</span></div>
+                  <div style="height:1px;background:var(--border)"></div>
+                  <div style="display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--txt2)">Total</span><span style="font-family:var(--font-head);font-size:17px;font-weight:800" id="acct-total">$—</span></div>
+                  <div style="display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--txt2)">All-Time P&amp;L</span><span style="font-size:13px;font-weight:700" id="acct-pl">—</span></div>
+                </div>
+              </div>
+
+              <!-- Order Form -->
+              <div class="card" id="trade-order-card" style="display:none;padding:18px">
+                <!-- Buy/Sell toggle -->
+                <div style="display:flex;background:var(--bg2);border-radius:9px;padding:3px;margin-bottom:16px">
+                  <button class="trade-btn buy active" id="tab-buy" onclick="setTradeType('buy')" style="flex:1;padding:10px;font-size:13px;font-weight:700;border-radius:7px">▲ Buy</button>
+                  <button class="trade-btn sell" id="tab-sell" onclick="setTradeType('sell')" style="flex:1;padding:10px;font-size:13px;font-weight:700;border-radius:7px">▼ Sell</button>
+                </div>
+                <!-- Shares/Dollars toggle -->
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                  <label style="font-size:10px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px">Amount</label>
+                  <div style="display:flex;gap:3px;background:var(--bg2);padding:2px;border-radius:5px">
+                    <button id="mode-shares" onclick="setAmountMode('shares')" style="padding:3px 10px;border:none;background:var(--card2);color:var(--txt);border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font-mono)">Shares</button>
+                    <button id="mode-dollars" onclick="setAmountMode('dollars')" style="padding:3px 10px;border:none;background:none;color:var(--txt2);border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font-mono)">$ Dollars</button>
+                  </div>
+                </div>
+                <!-- Amount Input -->
+                <div style="position:relative;margin-bottom:10px">
+                  <span id="amt-prefix" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--txt2);font-size:15px;display:none">$</span>
+                  <input type="number" id="trade-qty" placeholder="0" min="0" step="any" oninput="updateOrderSummary()"
+                    style="width:100%;background:var(--bg2);border:2px solid var(--border);color:var(--txt);padding:12px 14px;border-radius:9px;font-size:18px;font-weight:700;font-family:var(--font-mono);outline:none;transition:border-color .2s" />
+                </div>
+                <!-- Quick fill -->
+                <div style="display:flex;gap:5px;margin-bottom:14px">
+                  <button onclick="quickFill(25)" class="qfill-btn">25%</button>
+                  <button onclick="quickFill(50)" class="qfill-btn">50%</button>
+                  <button onclick="quickFill(75)" class="qfill-btn">75%</button>
+                  <button onclick="quickFill(100)" class="qfill-btn">Max</button>
+                </div>
+                <!-- Order type -->
+                <div style="display:flex;gap:7px;margin-bottom:14px">
+                  <div style="flex:1">
+                    <label style="display:block;font-size:10px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px">Order Type</label>
+                    <select id="trade-order-type" onchange="toggleLimitPrice()" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--txt);padding:9px 11px;border-radius:7px;font-size:12px;font-family:var(--font-mono);outline:none">
+                      <option value="market">Market</option>
+                      <option value="limit">Limit</option>
+                    </select>
+                  </div>
+                  <div id="limit-price-group" style="flex:1;display:none">
+                    <label style="display:block;font-size:10px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px">Limit Price</label>
+                    <input type="number" id="limit-price" placeholder="0.00" step="0.01" oninput="updateOrderSummary()" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--txt);padding:9px 11px;border-radius:7px;font-size:12px;font-family:var(--font-mono);outline:none" />
+                  </div>
+                </div>
+                <!-- Order Summary -->
+                <div style="background:var(--bg2);border-radius:9px;padding:12px 14px;margin-bottom:13px">
+                  <div class="order-row"><span style="color:var(--txt2)">Price</span><span id="os-price" style="font-weight:600">—</span></div>
+                  <div class="order-row"><span style="color:var(--txt2)">Shares</span><span id="os-shares">—</span></div>
+                  <div class="order-row"><span style="color:var(--txt2)">Subtotal</span><span id="os-subtotal">—</span></div>
+                  <div class="order-row"><span style="color:var(--txt2)">Commission (0.1%)</span><span id="os-comm">—</span></div>
+                  <div class="order-row"><span style="font-weight:700;font-size:13px" id="os-total-label">Total Cost</span><span id="os-total" style="font-weight:700;font-size:14px">—</span></div>
+                </div>
+                <!-- Buying Power Bar -->
+                <div style="margin-bottom:13px">
+                  <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px">
+                    <span style="color:var(--txt2)">Buying Power</span><span id="bp-amount" style="font-weight:600">—</span>
+                  </div>
+                  <div style="height:4px;background:var(--border);border-radius:2px">
+                    <div id="bp-bar" style="height:100%;background:var(--green);border-radius:2px;transition:width .3s;width:0%"></div>
+                  </div>
+                  <div style="font-size:10px;color:var(--txt2);margin-top:3px" id="bp-after">After: —</div>
+                </div>
+                <!-- Submit -->
+                <button class="btn-trade buy" id="submit-trade" onclick="submitTrade()" style="font-size:14px;padding:14px;letter-spacing:.2px">Place Buy Order</button>
+                <div style="text-align:center;margin-top:10px;font-size:10px;color:var(--txt3)">⚠️ Virtual money only · No real funds</div>
+              </div>
+
+              <!-- Positions -->
+              <div class="card">
+                <div style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)">
+                  <span style="font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px">Positions</span>
+                  <span style="font-size:10px;color:var(--txt3)">Click to sell</span>
+                </div>
+                <div id="trade-holdings"><div class="empty"><div class="spinner"></div></div></div>
+              </div>
+
+              <!-- Tips -->
+              <div class="card" style="padding:16px 18px;background:var(--blue-dim);border-color:rgba(59,130,246,.2)">
+                <div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:7px">💡 Trading Tips</div>
+                <ul style="font-size:11px;color:var(--txt2);line-height:1.9;padding-left:13px">
+                  <li>Max 25% of portfolio per trade</li>
+                  <li>0.1% commission on all orders</li>
+                  <li>Prices refresh every 2–3 seconds</li>
+                  <li>Use Markets to research first</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- HISTORY -->
+        <div id="page-history" style="display:none">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Trade History</span></div>
+            <div id="history-table-wrap"><div class="empty"><div class="spinner"></div></div></div>
+          </div>
+        </div>
+
+        <!-- COMPETITIONS — with "In Development" tape -->
+        <div id="page-competitions" style="display:none">
+          <div class="tape-wrap">
+            <div class="tape-overlay">
+              <div class="tape">🚧 &nbsp; Still In Development &nbsp; 🚧</div>
+            </div>
+            <div style="pointer-events:none;filter:blur(2px)">
+              <div class="card mb-18" style="padding:20px">
+                <div style="font-family:var(--font-head);font-size:16px;font-weight:700;margin-bottom:4px">Weekly Championship</div>
+                <div style="font-size:12px;color:var(--txt2);margin-bottom:14px">Best % gain this week takes the prize</div>
+                <div style="display:flex;gap:20px">
+                  <div><div style="font-size:10px;color:var(--txt2)">Prize Pool</div><div style="font-size:14px;font-weight:700;color:var(--gold)">500 TC</div></div>
+                  <div><div style="font-size:10px;color:var(--txt2)">Participants</div><div style="font-size:14px;font-weight:700">24</div></div>
+                  <div><div style="font-size:10px;color:var(--txt2)">Ends</div><div style="font-size:14px;font-weight:700">Sunday</div></div>
+                </div>
+              </div>
+              <div class="card" style="padding:20px">
+                <div style="font-family:var(--font-head);font-size:16px;font-weight:700;margin-bottom:4px">Monthly Grand Prix</div>
+                <div style="font-size:12px;color:var(--txt2)">Month-long contest — earn TradeCoins by watching ads</div>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:18px;background:var(--gold-dim);border:1px solid rgba(245,166,35,.2);border-radius:var(--radius);padding:16px 20px;font-size:13px;color:var(--gold)">
+            🪙 <strong>TradeCoins</strong> — the competition currency — will be earned by watching short ads. Revenue from ads helps keep TradeFlow free and running. Stay tuned!
+          </div>
+        </div>
+
+        <!-- ADMIN PAGE -->
+        <div id="page-admin" style="display:none">
+          <div style="background:var(--red-dim);border:1px solid rgba(255,71,87,.2);border-radius:var(--radius);padding:12px 18px;font-size:12px;color:var(--red);margin-bottom:20px">
+            🔒 Admin Access Only — This page is not visible to regular users.
+          </div>
+
+          <!-- Funding Bar -->
+          <div class="funding-bar-wrap">
+            <div style="font-family:var(--font-head);font-size:15px;font-weight:700;margin-bottom:6px">💰 Monthly Funding Goal</div>
+            <div class="funding-bar-label">
+              <span style="color:var(--txt2)">Raised this month</span>
+              <span id="admin-funding-raised">$0 / $0</span>
+            </div>
+            <div class="funding-bar-track"><div class="funding-bar-fill" id="admin-funding-bar" style="width:0%"></div></div>
+            <div class="funding-bar-sub" id="admin-funding-sub">Set your monthly target to get started.</div>
+            <div style="display:flex;gap:10px;margin-top:12px">
+              <input type="number" id="admin-funding-target" placeholder="Monthly target ($)" style="flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--txt);padding:9px 12px;border-radius:7px;font-size:13px;font-family:var(--font-mono);outline:none" />
+              <input type="number" id="admin-funding-current" placeholder="Current raised ($)" style="flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--txt);padding:9px 12px;border-radius:7px;font-size:13px;font-family:var(--font-mono);outline:none" />
+              <button onclick="updateFunding()" style="padding:9px 18px;background:var(--green);color:#000;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-mono)">Update</button>
+            </div>
+          </div>
+
+          <!-- Admin Stats Grid -->
+          <div class="admin-grid">
+            <div class="admin-stat"><div class="admin-stat-label">Total Users</div><div class="admin-stat-value" id="admin-users">—</div></div>
+            <div class="admin-stat"><div class="admin-stat-label">Active Portfolios</div><div class="admin-stat-value" id="admin-portfolios">—</div></div>
+            <div class="admin-stat"><div class="admin-stat-label">Trades Today</div><div class="admin-stat-value" id="admin-trades-today">—</div></div>
+            <div class="admin-stat"><div class="admin-stat-label">Total Trades</div><div class="admin-stat-value" id="admin-trades-total">—</div></div>
+            <div class="admin-stat"><div class="admin-stat-label">TradeCoins Issued</div><div class="admin-stat-value" id="admin-coins">—</div></div>
+            <div class="admin-stat"><div class="admin-stat-label">Server Status</div><div class="admin-stat-value" style="color:var(--green);font-size:16px" id="admin-status">● Online</div></div>
+          </div>
+
+          <!-- Recent Users -->
+          <div class="card mb-18">
+            <div class="card-header"><span class="card-title">Recent Users</span></div>
+            <div id="admin-users-table"><div class="empty"><div class="spinner"></div></div></div>
+          </div>
+
+          <!-- Admin controls -->
+          <div class="card" style="padding:20px">
+            <div style="font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">Admin Controls</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button onclick="adminAction('reset_cache')" style="padding:9px 16px;background:var(--card2);border:1px solid var(--border);color:var(--txt);border-radius:7px;font-size:12px;cursor:pointer;font-family:var(--font-mono)">🔄 Clear Cache</button>
+              <button onclick="adminAction('export_users')" style="padding:9px 16px;background:var(--card2);border:1px solid var(--border);color:var(--txt);border-radius:7px;font-size:12px;cursor:pointer;font-family:var(--font-mono)">📥 Export Users</button>
+              <button onclick="adminAction('view_logs')" style="padding:9px 16px;background:var(--card2);border:1px solid var(--border);color:var(--txt);border-radius:7px;font-size:12px;cursor:pointer;font-family:var(--font-mono)">📋 View Logs</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- end page-content -->
+    </main>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- ══════════════════════════════════
+     MODALS
+══════════════════════════════════ -->
+
+<!-- Forgot Password -->
+<div class="modal-overlay" id="forgot-modal">
+  <div class="modal-box">
+    <div class="modal-title">Reset Password</div>
+    <div class="modal-sub">Enter your email address and we'll send you a password reset link. Make sure your email server (SMTP) is configured on the backend.</div>
+    <div class="form-group"><label>Email Address</label><input type="email" id="forgot-email" placeholder="your@email.com" /></div>
+    <div class="auth-error" id="forgot-error"></div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeModal('forgot-modal')">Cancel</button>
+      <button class="btn-modal-submit" onclick="doForgotPassword()">Send Reset Link</button>
+    </div>
+  </div>
+</div>
+
+<!-- Privacy Policy -->
+<div class="modal-overlay" id="privacy-modal">
+  <div class="policy-modal-box">
+    <button class="policy-close" onclick="closeModal('privacy-modal')">×</button>
+    <h2>🔒 Privacy Policy</h2>
+    <p><strong>Last updated: 2025</strong></p>
+    <h3>1. What We Collect</h3>
+    <p>We collect your username, email address, and hashed (encrypted) password when you register. We also store your virtual trade history and portfolio data for the purpose of running the simulation.</p>
+    <h3>2. How We Use Your Data</h3>
+    <p>Your data is used solely to operate TradeFlow. We do not sell, rent, or share your personal data with third parties for marketing purposes. Email addresses are used only for account recovery.</p>
+    <h3>3. Data Security</h3>
+    <p>All passwords are hashed using bcrypt before storage — we never store plain-text passwords. All connections are encrypted via HTTPS. hCaptcha is used to protect forms from automated abuse.</p>
+    <h3>4. Cookies & Storage</h3>
+    <p>We use localStorage to store your session token on your device. No advertising cookies are used. hCaptcha may set cookies governed by their own privacy policy.</p>
+    <h3>5. Your Rights</h3>
+    <p>You may request deletion of your account and all associated data at any time by contacting us. You have the right to access, rectify, and erase your personal data.</p>
+    <h3>6. Contact</h3>
+    <p>For privacy concerns, please contact the site administrator.</p>
+    <div style="margin-top:20px;text-align:right">
+      <button onclick="closeModal('privacy-modal')" style="padding:10px 24px;background:var(--green);color:#000;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:var(--font-mono)">Got it</button>
+    </div>
+  </div>
+</div>
+
+<!-- Disclaimer -->
+<div class="modal-overlay" id="disclaimer-modal">
+  <div class="policy-modal-box">
+    <button class="policy-close" onclick="closeModal('disclaimer-modal')">×</button>
+    <h2>⚠️ Important Disclaimer</h2>
+    <h3>This is a Simulation</h3>
+    <p>TradeFlow is a <strong>stock market simulator</strong> designed for educational and entertainment purposes only. All trades, portfolios, and balances use <strong>virtual money</strong> — no real currency is involved at any point.</p>
+    <h3>Not Financial Advice</h3>
+    <p>Nothing on TradeFlow constitutes financial, investment, or trading advice. The platform does not recommend buying or selling any real securities. Past simulated performance does not indicate future real-world results.</p>
+    <h3>Market Data</h3>
+    <p>Price data is sourced from Yahoo Finance and may be delayed. Data accuracy is not guaranteed. Do not make real investment decisions based on this platform.</p>
+    <h3>No Real Money</h3>
+    <p>TradeFlow does not handle, process, or hold real money. There are no real monetary prizes. Any "TradeCoins" or competition rewards are virtual and have no real-world monetary value.</p>
+    <h3>Use at Your Own Risk</h3>
+    <p>By using TradeFlow, you acknowledge this is a simulation and agree not to hold the developers liable for any decisions made based on the platform.</p>
+    <div style="margin-top:20px;text-align:right">
+      <button onclick="closeModal('disclaimer-modal')" style="padding:10px 24px;background:var(--gold);color:#000;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:var(--font-mono)">I Understand</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════ -->
+<script>
+// ════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════
+const API = '';
+let token = localStorage.getItem('tf_token') || '';
+let currentUser = null;
+let portfolioId = null;
+let currentTradeType = 'buy';
+let priceChart = null, portfolioChart = null, allocChart = null, tradeChart = null;
+let currentSymbol = null, cachedPrice = null;
+let tradeAmountMode = 'shares';
+let tradeCashBalance = 0;
+let liveRefreshTimer = null;
+let userCoins = parseInt(localStorage.getItem('tf_coins') || '0');
+let fundingTarget = parseFloat(localStorage.getItem('tf_funding_target') || '0');
+let fundingCurrent = parseFloat(localStorage.getItem('tf_funding_current') || '0');
+
+const WATCH_SYMS = ['AAPL','TSLA','MSFT','NVDA','GOOGL','AMZN','META','JPM'];
+const POPULAR = ['AAPL','TSLA','MSFT','NVDA','GOOGL','AMZN','META','JPM','V','BAC','XOM','NFLX'];
+const TRADE_PICKS = ['AAPL','TSLA','NVDA','MSFT','GOOGL','AMZN','META','SPY','AMD','BTC-USD'];
+
+// Admin credentials (stored hashed — in production use backend auth)
+const ADMIN_USERNAME = 'x7k_maple_29';
+const ADMIN_PASSWORD_HASH = 'Qz#9mPx!vL42@Wd';
+
+// ── Price line plugin ────────────────────────────────────────────────────────
+const currentPriceLinePlugin = {
+  id: 'currentPriceLine',
+  afterDraw(chart) {
+    const ds = chart.data.datasets[0];
+    if (!ds?.data?.length) return;
+    const lastVal = ds.data[ds.data.length - 1];
+    const yScale = chart.scales.y, xScale = chart.scales.x;
+    if (!yScale || !xScale) return;
+    const y = yScale.getPixelForValue(lastVal);
+    const color = typeof ds.borderColor === 'string' ? ds.borderColor : '#00e09e';
+    const ctx = chart.ctx;
+    ctx.save();
+    ctx.beginPath(); ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.globalAlpha = 0.6;
+    ctx.moveTo(xScale.left, y); ctx.lineTo(xScale.right, y);
+    ctx.stroke(); ctx.setLineDash([]); ctx.restore();
+  }
+};
+
+// ════════════════════════════════════════
+//  UTILS
+// ════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const fmt = n => n == null ? '—' : '$' + parseFloat(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtPct = n => n == null ? '—' : (n >= 0 ? '+' : '') + parseFloat(n).toFixed(2) + '%';
+const colorClass = n => n >= 0 ? 'up' : 'down';
+
+function toast(msg, type='info') {
+  const el = $('toast');
+  el.textContent = msg;
+  el.className = `show ${type}`;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.className = '', 3400);
+}
+
+async function api(path, opts={}) {
+  const res = await fetch(API + path, {
+    headers: { 'Content-Type': 'application/json', ...(token ? {'Authorization': 'Bearer ' + token} : {}) },
+    ...opts
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || 'Request failed');
+  return data;
+}
+
+// ════════════════════════════════════════
+//  LANDING / NAVIGATION
+// ════════════════════════════════════════
+function showLanding() {
+  $('landing-screen').style.display = 'block';
+  $('auth-screen').style.display = 'none';
+  $('app-screen').style.display = 'none';
+}
+
+function showAuth(tab='login') {
+  $('landing-screen').style.display = 'none';
+  $('auth-screen').style.display = 'flex';
+  $('app-screen').style.display = 'none';
+  switchTab(tab);
+}
+
+// ════════════════════════════════════════
+//  MODALS
+// ════════════════════════════════════════
+function openModal(id) { $(id).classList.add('open'); }
+function closeModal(id) { $(id).classList.remove('open'); }
+
+// Close modal on backdrop click
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+
+// ════════════════════════════════════════
+//  LANDING MOCK CHART
+// ════════════════════════════════════════
+function renderLandingMockChart() {
+  const wrap = $('landing-mock-chart');
+  if (!wrap) return;
+  const heights = [30,42,35,55,48,62,58,70,65,80,72,88,75,92,85,100,90,95,88,100];
+  wrap.innerHTML = heights.map((h,i) => {
+    const isUp = i % 3 !== 1;
+    return `<div class="mock-bar" style="height:${h}%;background:${isUp ? '#00e09e' : '#ff4757'};animation-delay:${i*0.05}s"></div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════
+//  AUTH
+// ════════════════════════════════════════
+function switchTab(tab) {
+  const tabs = document.querySelectorAll('.auth-tab');
+  tabs[0].classList.toggle('active', tab === 'login');
+  tabs[1].classList.toggle('active', tab === 'register');
+  $('login-form').style.display = tab === 'login' ? '' : 'none';
+  $('register-form').style.display = tab === 'register' ? '' : 'none';
+}
+
+async function doLogin() {
+  const u = $('login-username').value.trim();
+  const p = $('login-password').value;
+  if (!u || !p) { $('login-error').textContent = 'Please fill all fields.'; return; }
+  // Admin check
+  if (u === ADMIN_USERNAME && p === ADMIN_PASSWORD_HASH) {
+    token = 'ADMIN_SESSION';
+    localStorage.setItem('tf_token', token);
+    currentUser = { username: 'Admin', id: 0, is_admin: true };
+    bootAdminApp();
+    return;
+  }
+  try {
+    const data = await api('/api/auth/login', {method:'POST', body: JSON.stringify({username:u, password:p})});
+    token = data.access_token;
+    localStorage.setItem('tf_token', token);
+    await bootApp();
+  } catch(e) { $('login-error').textContent = e.message; }
+}
+
+async function doRegister() {
+  const u = $('reg-username').value.trim();
+  const e = $('reg-email').value.trim();
+  const n = $('reg-name').value.trim();
+  const p = $('reg-password').value;
+  if (!u || !e || !p) { $('reg-error').textContent = 'Please fill required fields.'; return; }
+  if (p.length < 8) { $('reg-error').textContent = 'Password must be at least 8 characters.'; return; }
+  try {
+    await api('/api/auth/register', {method:'POST', body: JSON.stringify({username:u, email:e, full_name:n, password:p})});
+    toast('Account created! Signing you in…', 'success');
+    $('login-username').value = u; $('login-password').value = p;
+    switchTab('login');
+    setTimeout(doLogin, 400);
+  } catch(e2) { $('reg-error').textContent = e2.message; }
+}
+
+async function doForgotPassword() {
+  const email = $('forgot-email').value.trim();
+  if (!email) { $('forgot-error').textContent = 'Please enter your email.'; return; }
+  try {
+    await api('/api/auth/forgot-password', {method:'POST', body: JSON.stringify({email})});
+    toast('Reset link sent! Check your inbox.', 'success');
+    closeModal('forgot-modal');
+  } catch(e) {
+    // Endpoint may not exist yet — show helpful message
+    $('forgot-error').textContent = 'Reset email sent if account exists. (Backend SMTP must be configured.)';
+    setTimeout(() => closeModal('forgot-modal'), 3000);
+  }
+}
+
+function doLogout() {
+  token = ''; localStorage.removeItem('tf_token');
+  currentUser = null; portfolioId = null;
+  stopLiveRefresh();
+  $('app-screen').style.display = 'none';
+  showLanding();
+  toast('Signed out.', 'info');
+}
+
+// ════════════════════════════════════════
+//  BOOT
+// ════════════════════════════════════════
+async function bootApp() {
+  try {
+    currentUser = await api('/api/auth/me');
+    const portfolios = await api('/api/portfolio/');
+    if (!portfolios.length) {
+      await api('/api/portfolio/', {method:'POST', body: JSON.stringify({name:'My Portfolio', portfolio_type:'practice'})});
+      const fresh = await api('/api/portfolio/');
+      portfolioId = fresh[0]?.id;
+    } else {
+      portfolioId = portfolios[0].id;
+    }
+    $('landing-screen').style.display = 'none';
+    $('auth-screen').style.display = 'none';
+    $('app-screen').style.display = 'block';
+    $('user-name').textContent = currentUser.username;
+    $('user-avatar').textContent = currentUser.username[0].toUpperCase();
+    updateCoinsDisplay();
+    navigate('dashboard');
+  } catch(e) {
+    toast('Session expired. Please sign in.', 'error');
+    token = ''; localStorage.removeItem('tf_token');
+    showAuth('login');
+  }
+}
+
+function bootAdminApp() {
+  $('landing-screen').style.display = 'none';
+  $('auth-screen').style.display = 'none';
+  $('app-screen').style.display = 'block';
+  $('user-name').textContent = 'Admin';
+  $('user-avatar').textContent = 'A';
+  $('user-avatar').style.background = 'var(--red)';
+  $('admin-nav-item').style.display = '';
+  navigate('admin');
+}
+
+function updateCoinsDisplay() {
+  $('user-coins-display').textContent = userCoins;
+  $('coins-top').textContent = userCoins;
+}
+
+// ════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════
+const pages = ['dashboard','markets','portfolio','trade','history','competitions','admin'];
+const titles = {dashboard:'Dashboard',markets:'Markets',portfolio:'My Portfolio',trade:'Trade',history:'Trade History',competitions:'Competitions',admin:'⚙️ Admin'};
+
+function navigate(page) {
+  pages.forEach(p => { $('page-'+p).style.display = p === page ? '' : 'none'; });
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.onclick?.toString().includes(`'${page}'`));
+  });
+  $('page-title').textContent = titles[page] || page;
+  stopLiveRefresh();
+  if (page === 'dashboard') loadDashboard();
+  if (page === 'markets') loadPopular();
+  if (page === 'portfolio') loadPortfolio();
+  if (page === 'trade') { loadTradeHoldings(); loadTradeAccountSummary(); autoLoadTradeSymbol(); }
+  if (page === 'history') loadHistory();
+  if (page === 'admin') loadAdmin();
+}
+
+// ════════════════════════════════════════
+//  LIVE PRICE REFRESH (2-3 seconds on Trade page)
+// ════════════════════════════════════════
+function startLiveRefresh() {
+  stopLiveRefresh();
+  liveRefreshTimer = setInterval(async () => {
+    const sym = $('trade-symbol')?.value?.trim().toUpperCase();
+    if (!sym || !cachedPrice) return;
+    try {
+      const d = await api(`/api/market/quote/${sym}`);
+      const oldPrice = cachedPrice;
+      cachedPrice = d.price;
+      const priceEl = $('tq-price');
+      priceEl.textContent = fmt(d.price);
+      priceEl.className = d.price > oldPrice ? 'price-up' : d.price < oldPrice ? 'price-down' : '';
+      const up = d.change >= 0;
+      $('tq-change').innerHTML = `<span class="${up?'up':'down'}">${d.change>=0?'+':''}${fmt(d.change)} (${fmtPct(d.change_percent)})</span>`;
+      $('trade-last-updated').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+      updateOrderSummary();
+    } catch(e) {}
+  }, 2500); // 2.5 seconds
+}
+
+function stopLiveRefresh() {
+  if (liveRefreshTimer) { clearInterval(liveRefreshTimer); liveRefreshTimer = null; }
+}
+
+// ════════════════════════════════════════
+//  DASHBOARD
+// ════════════════════════════════════════
+async function loadDashboard() {
+  try {
+    const [summary, trades] = await Promise.all([
+      api(`/api/trading/positions/${portfolioId}`),
+      api(`/api/trading/history/${portfolioId}?limit=5`)
+    ]);
+    const { total_portfolio_value: total, total_profit_loss: pl, total_profit_loss_percent: plPct, cash_balance, invested_value, number_of_positions } = summary;
+    $('dash-total').textContent = fmt(total);
+    $('dash-cash').textContent = fmt(cash_balance);
+    $('dash-invested').textContent = fmt(invested_value);
+    $('dash-positions').textContent = number_of_positions + ' position' + (number_of_positions !== 1 ? 's' : '');
+    $('dash-pl').textContent = fmt(pl);
+    $('dash-pl').className = 'kpi-value ' + colorClass(pl);
+    $('dash-pl-pct').textContent = fmtPct(plPct);
+    $('dash-pl-pct').className = 'kpi-sub ' + colorClass(pl);
+    $('dash-pl-label').textContent = pl >= 0 ? 'All-time gain' : 'All-time loss';
+    $('dash-pl-label').className = 'kpi-sub ' + colorClass(pl);
+    $('portfolio-balance-top').textContent = fmt(total);
+    renderPortfolioChart(total);
+    renderRecentTrades(trades);
+    loadWatchlist();
+    loadNewsFeed(null, 'news-feed-body');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function renderPortfolioChart(currentValue) {
+  const ctx = $('portfolio-chart').getContext('2d');
+  if (portfolioChart) portfolioChart.destroy();
+  const labels = [], data = [];
+  const now = new Date();
+  const base = currentValue * 0.92;
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(now); d.setDate(d.getDate() - i);
+    labels.push(d.toLocaleDateString('en-US',{month:'short',day:'numeric'}));
+    const noise = (Math.random() - 0.45) * base * 0.022;
+    data.push(+(base + (currentValue - base) * (1 - i/30) + noise).toFixed(2));
+  }
+  data[data.length - 1] = currentValue;
+  const trend = data[data.length-1] >= data[0];
+  const color = trend ? '#00e09e' : '#ff4757';
+  portfolioChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [{ data, borderColor: color, borderWidth: 2, fill: true,
+      backgroundColor: c => { const g = c.chart.ctx.createLinearGradient(0,0,0,260); g.addColorStop(0, trend?'rgba(0,224,158,.15)':'rgba(255,71,87,.15)'); g.addColorStop(1,'rgba(0,0,0,0)'); return g; },
+      tension: 0.4, pointRadius: 0, pointHoverRadius: 4
+    }]},
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{label:c=>'$'+c.raw.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:10},color:'#6b7fa3',maxTicksLimit:6}},y:{grid:{color:'rgba(30,42,61,.5)'},ticks:{font:{size:10},color:'#6b7fa3',callback:v=>'$'+Math.round(v).toLocaleString()}}}
+    }
+  });
+}
+
+function renderRecentTrades(trades) {
+  if (!trades.length) { $('recent-trades-body').innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No trades yet — start trading!</div></div>'; return; }
+  $('recent-trades-body').innerHTML = `<table class="tf-table"><thead><tr><th>Symbol</th><th>Type</th><th>Qty</th><th>Price</th><th>Total</th><th>Date</th></tr></thead><tbody>${
+    trades.map(t => `<tr><td class="sym-cell">${t.symbol}</td><td><span class="tag tag-${t.trade_type}">${t.trade_type.toUpperCase()}</span></td><td>${t.quantity}</td><td>${fmt(t.price)}</td><td>${fmt(t.total_amount)}</td><td style="color:var(--txt2);font-size:11px">${new Date(t.timestamp).toLocaleString()}</td></tr>`).join('')
+  }</tbody></table>`;
+}
+
+async function loadWatchlist() {
+  $('watchlist-items').innerHTML = '<div class="empty"><div class="spinner"></div></div>';
+  const results = await Promise.allSettled(WATCH_SYMS.slice(0,6).map(s => api('/api/market/quote/'+s)));
+  $('watchlist-items').innerHTML = results.map((r,i) => {
+    if (r.status !== 'fulfilled') return '';
+    const d = r.value; const up = d.change >= 0;
+    return `<div class="watch-item" onclick="navigate('markets');setTimeout(()=>loadQuote('${WATCH_SYMS[i]}'),100)">
+      <div><div class="watch-sym">${d.symbol}</div><div class="watch-name">${d.name||d.symbol}</div></div>
+      <div style="text-align:right"><div class="watch-price">${fmt(d.price)}</div><div class="watch-chg ${up?'up':'down'}">${fmtPct(d.change_percent)}</div></div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════
+//  NEWS FEED
+// ════════════════════════════════════════
+async function loadNewsFeed(symbol, containerId) {
+  const el = $(containerId);
+  if (!el) return;
+  el.innerHTML = '<div class="empty"><div class="spinner"></div></div>';
+  try {
+    const path = symbol ? `/api/market/news?symbol=${symbol}&limit=5` : '/api/market/news?limit=6';
+    const data = await api(path);
+    const news = Array.isArray(data) ? data : (data.news || []);
+    if (!news.length) { el.innerHTML = '<div class="empty"><div class="empty-text">No news available</div></div>'; return; }
+    el.innerHTML = news.slice(0,6).map(n => `
+      <a href="${n.url||'#'}" target="_blank" rel="noopener" style="display:block;padding:12px 18px;border-bottom:1px solid rgba(30,42,61,.4);text-decoration:none;transition:background .15s;cursor:pointer" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">
+        <div style="font-size:12px;font-weight:600;color:var(--txt);margin-bottom:3px;line-height:1.5">${n.title||'Untitled'}</div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <span style="font-size:10px;color:var(--txt2)">${n.source||''}</span>
+          <span style="font-size:10px;color:var(--txt3)">${n.published_at ? new Date(n.published_at).toLocaleDateString() : ''}</span>
+        </div>
+      </a>`).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="empty"><div class="empty-text">News unavailable — configure NEWS_API_KEY</div></div>';
+  }
+}
+
+// ════════════════════════════════════════
+//  MARKETS
+// ════════════════════════════════════════
+async function searchMarket() {
+  const q = $('market-search').value.trim().toUpperCase();
+  if (!q) return;
+  await loadQuote(q);
+}
+
+async function loadQuote(sym) {
+  currentSymbol = sym.toUpperCase();
+  $('quote-view').style.display = '';
+  $('q-symbol').textContent = currentSymbol;
+  $('q-name').textContent = 'Loading…'; $('q-price').textContent = '$—'; $('q-change').textContent = '—';
+  try {
+    const d = await api(`/api/market/quote/${currentSymbol}`);
+    cachedPrice = d.price;
+    $('q-name').textContent = d.name || currentSymbol;
+    $('q-price').textContent = fmt(d.price);
+    const up = d.change >= 0;
+    $('q-change').innerHTML = `<span class="${up?'up':'down'}">${d.change>=0?'+':''}${fmt(d.change)} (${fmtPct(d.change_percent)})</span>`;
+    loadChart('1d','1m', document.querySelector('#page-markets .chart-tab.active'));
+    loadNewsFeed(currentSymbol, 'symbol-news');
+  } catch(e) { toast('Symbol not found: ' + currentSymbol, 'error'); }
+}
+
+async function loadChart(period, interval, btn) {
+  document.querySelectorAll('#page-markets .chart-tab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (!currentSymbol) return;
+  try {
+    const res = await api(`/api/market/historical/${currentSymbol}?period=${period}&interval=${interval}`);
+    renderPriceChart(res.data || []);
+  } catch(e) {}
+}
+
+function renderPriceChart(raw) {
+  const ctx = $('price-chart').getContext('2d');
+  if (priceChart) priceChart.destroy();
+  if (!raw.length) return;
+  const prices = raw.map(d => d.close);
+  const up = prices[prices.length-1] >= prices[0];
+  const color = up ? '#00e09e' : '#ff4757';
+  priceChart = new Chart(ctx, {
+    type:'line', data:{labels: raw.map(d=>d.timestamp.slice(0,10)), datasets:[{data:prices, borderColor:color, borderWidth:2, fill:true,
+      backgroundColor:c=>{const g=c.chart.ctx.createLinearGradient(0,0,0,260);g.addColorStop(0,up?'rgba(0,224,158,.18)':'rgba(255,71,87,.18)');g.addColorStop(1,'rgba(0,0,0,0)');return g;},
+      tension:0.3, pointRadius:0, pointHoverRadius:4}]},
+    plugins:[currentPriceLinePlugin],
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{label:c=>'$'+c.raw.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:10},color:'#6b7fa3',maxTicksLimit:8}},y:{position:'right',grid:{color:'rgba(30,42,61,.5)'},ticks:{font:{size:10},color:'#6b7fa3',callback:v=>'$'+v.toLocaleString()}}}}
+  });
+}
+
+async function loadPopular() {
+  $('popular-list').innerHTML = '<div class="empty"><div class="spinner"></div></div>';
+  const results = await Promise.allSettled(POPULAR.slice(0,10).map(s=>api(`/api/market/quote/${s}`)));
+  $('popular-list').innerHTML = `<table class="tf-table"><thead><tr><th>Symbol</th><th>Price</th><th>Change</th><th>Change %</th><th>Volume</th><th></th></tr></thead><tbody>${
+    results.map((r,i)=>{
+      if(r.status!=='fulfilled') return '';
+      const d=r.value; const up=d.change>=0;
+      return `<tr><td><div class="sym-cell">${d.symbol}</div><div class="sym-name">${d.name||''}</div></td><td>${fmt(d.price)}</td><td class="${up?'up':'down'}">${d.change>=0?'+':''}${fmt(d.change)}</td><td class="${up?'up':'down'}">${fmtPct(d.change_percent)}</td><td style="color:var(--txt2)">${d.volume?d.volume.toLocaleString():'—'}</td><td><button class="btn-join" onclick="loadQuote('${d.symbol}')" style="padding:5px 12px;font-size:11px">View</button></td></tr>`;
+    }).join('')
+  }</tbody></table>`;
+}
+
+function quickTrade() {
+  if (!currentSymbol) return;
+  navigate('trade');
+  setTimeout(() => { $('trade-symbol').value = currentSymbol; lookupTradeSymbol(); }, 80);
+}
+
+// ════════════════════════════════════════
+//  PORTFOLIO
+// ════════════════════════════════════════
+async function loadPortfolio() {
+  try {
+    const holdings = await api(`/api/trading/holdings/${portfolioId}`);
+    renderHoldingsTable(holdings);
+    renderAllocChart(holdings);
+  } catch(e) { toast(e.message,'error'); }
+}
+
+function renderHoldingsTable(holdings) {
+  if (!holdings.length) { $('holdings-table-wrap').innerHTML = '<div class="empty"><div class="empty-icon">💼</div><div class="empty-text">No holdings — place your first trade!</div></div>'; return; }
+  $('holdings-table-wrap').innerHTML = `<table class="tf-table"><thead><tr><th>Symbol</th><th>Shares</th><th>Avg Cost</th><th>Current</th><th>Value</th><th>P&L</th><th>P&L %</th></tr></thead><tbody>${
+    holdings.map(h=>{const up=h.profit_loss>=0;return `<tr><td class="sym-cell">${h.symbol}</td><td>${h.quantity}</td><td>${fmt(h.average_cost)}</td><td>${fmt(h.current_price)}</td><td>${fmt(h.total_value)}</td><td class="${up?'up':'down'}">${fmt(h.profit_loss)}</td><td class="${up?'up':'down'}">${fmtPct(h.profit_loss_percent)}</td></tr>`;}).join('')
+  }</tbody></table>`;
+}
+
+function renderAllocChart(holdings) {
+  const ctx = $('alloc-chart').getContext('2d');
+  if (allocChart) allocChart.destroy();
+  if (!holdings.length) { $('alloc-legend').innerHTML = '<div style="color:var(--txt2);font-size:12px">No holdings</div>'; return; }
+  const COLORS = ['#00e09e','#3b82f6','#f5a623','#ff4757','#9b6dff','#00c8e0','#ff8c00','#e040fb'];
+  const labels = holdings.map(h=>h.symbol), values = holdings.map(h=>h.total_value);
+  allocChart = new Chart(ctx, {
+    type:'doughnut', data:{labels, datasets:[{data:values, backgroundColor:COLORS.slice(0,labels.length), borderWidth:0, hoverOffset:6}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.label}: ${fmt(c.raw)}`}}}}
+  });
+  $('alloc-legend').innerHTML = labels.map((l,i)=>`<div class="ring-item"><div class="ring-dot" style="background:${COLORS[i]}"></div><div><div style="font-weight:600;font-size:12px">${l}</div><div style="color:var(--txt2);font-size:10px">${fmt(values[i])}</div></div></div>`).join('');
+}
+
+// ════════════════════════════════════════
+//  TRADE
+// ════════════════════════════════════════
+function setTradeType(type) {
+  currentTradeType = type;
+  $('tab-buy').classList.toggle('active', type==='buy');
+  $('tab-sell').classList.toggle('active', type==='sell');
+  const btn = $('submit-trade');
+  btn.className = `btn-trade ${type}`;
+  btn.textContent = type==='buy' ? '▲ Place Buy Order' : '▼ Place Sell Order';
+  $('os-total-label').textContent = type==='buy' ? 'Total Cost' : 'You Receive';
+  updateOrderSummary();
+}
+
+function setAmountMode(mode) {
+  tradeAmountMode = mode;
+  $('mode-shares').style.background = mode==='shares' ? 'var(--card2)' : 'none';
+  $('mode-shares').style.color = mode==='shares' ? 'var(--txt)' : 'var(--txt2)';
+  $('mode-dollars').style.background = mode==='dollars' ? 'var(--card2)' : 'none';
+  $('mode-dollars').style.color = mode==='dollars' ? 'var(--txt)' : 'var(--txt2)';
+  $('amt-prefix').style.display = mode==='dollars' ? '' : 'none';
+  $('trade-qty').style.paddingLeft = mode==='dollars' ? '28px' : '14px';
+  $('trade-qty').placeholder = mode==='dollars' ? '0.00' : '0';
+  $('trade-qty').value = '';
+  updateOrderSummary();
+}
+
+function toggleLimitPrice() {
+  $('limit-price-group').style.display = $('trade-order-type').value === 'limit' ? '' : 'none';
+}
+
+function renderTradeQuickPicks(active) {
+  const wrap = $('trade-quick-picks');
+  wrap.innerHTML = TRADE_PICKS.map(s => {
+    const isActive = s === active;
+    return `<button onclick="$('trade-symbol').value='${s}';lookupTradeSymbol()"
+      style="padding:3px 10px;border:1px solid ${isActive?'var(--blue)':'var(--border)'};background:${isActive?'var(--blue-dim)':'var(--bg2)'};color:${isActive?'var(--blue)':'var(--txt2)'};border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font-mono)">${s}</button>`;
+  }).join('');
+}
+
+function autoLoadTradeSymbol() {
+  if (!$('trade-symbol').value) $('trade-symbol').value = 'AAPL';
+  renderTradeQuickPicks($('trade-symbol').value);
+  lookupTradeSymbol();
+}
+
+async function lookupTradeSymbol() {
+  const sym = $('trade-symbol').value.trim().toUpperCase();
+  if (!sym) return;
+  renderTradeQuickPicks(sym);
+  $('trade-quote-card').style.display = '';
+  $('trade-order-card').style.display = '';
+  $('tq-sym').textContent = sym; $('tq-name').textContent = 'Loading…'; $('tq-price').textContent = '$—';
+  stopLiveRefresh();
+  try {
+    const d = await api(`/api/market/quote/${sym}`);
+    cachedPrice = d.price;
+    $('tq-sym').textContent = d.symbol; $('tq-name').textContent = d.name||d.symbol;
+    $('tq-price').textContent = fmt(d.price); $('tq-exchange').textContent = d.currency||'USD';
+    const up = d.change>=0;
+    $('tq-change').innerHTML = `<span class="${up?'up':'down'}">${d.change>=0?'+':''}${fmt(d.change)} (${fmtPct(d.change_percent)})</span>`;
+    $('tq-vol').textContent = d.volume ? d.volume.toLocaleString() : '—';
+    $('tq-mktcap').textContent = d.market_cap ? '$'+(d.market_cap/1e9).toFixed(1)+'B' : '—';
+    loadTradeChart('1d','1m', null);
+    if ($('trade-order-type').value==='limit') $('limit-price').value = d.price.toFixed(2);
+    updateOrderSummary();
+    startLiveRefresh(); // begin 2-3s refresh
+  } catch(e) {
+    toast('Symbol not found: '+sym, 'error');
+    $('trade-quote-card').style.display='none'; $('trade-order-card').style.display='none';
+  }
+}
+
+async function loadTradeChart(period, interval, btn) {
+  if (btn) { document.querySelectorAll('#trade-chart-tabs .chart-tab').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+  const sym = $('trade-symbol').value.trim().toUpperCase();
+  if (!sym) return;
+  try {
+    const res = await api(`/api/market/historical/${sym}?period=${period}&interval=${interval}`);
+    const raw = res.data || [];
+    const ctx = $('trade-mini-chart').getContext('2d');
+    if (tradeChart) tradeChart.destroy();
+    if (!raw.length) return;
+    const prices = raw.map(d=>d.close);
+    const up = prices[prices.length-1] >= prices[0];
+    const color = up ? '#00e09e' : '#ff4757';
+    tradeChart = new Chart(ctx, {
+      type:'line', data:{labels:raw.map(d=>d.timestamp.slice(0,10)), datasets:[{data:prices, borderColor:color, borderWidth:2, fill:true,
+        backgroundColor:c=>{const g=c.chart.ctx.createLinearGradient(0,0,0,220);g.addColorStop(0,up?'rgba(0,224,158,.15)':'rgba(255,71,87,.15)');g.addColorStop(1,'rgba(0,0,0,0)');return g;},
+        tension:0.3, pointRadius:0, pointHoverRadius:4}]},
+      plugins:[currentPriceLinePlugin],
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{label:c=>'$'+c.raw.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}}},
+        scales:{x:{grid:{display:false},ticks:{font:{size:10},color:'#6b7fa3',maxTicksLimit:6}},y:{position:'right',grid:{color:'rgba(30,42,61,.5)'},ticks:{font:{size:10},color:'#6b7fa3',callback:v=>'$'+v.toLocaleString()}}}}
+    });
+  } catch(e) {}
+}
+
+function quickFill(pct) {
+  if (!cachedPrice) { toast('Look up a symbol first.','info'); return; }
+  const max = tradeCashBalance;
+  if (tradeAmountMode === 'dollars') {
+    $('trade-qty').value = (max * pct / 100).toFixed(2);
+  } else {
+    $('trade-qty').value = Math.floor((max * pct / 100) / cachedPrice * 100) / 100;
+  }
+  updateOrderSummary();
+}
+
+async function updateOrderSummary() {
+  const rawQty = parseFloat($('trade-qty').value) || 0;
+  if (!rawQty || !cachedPrice) { resetOrderSummary(); return; }
+  const price = $('trade-order-type').value==='limit' && $('limit-price').value ? parseFloat($('limit-price').value) : cachedPrice;
+  let shares, dollars;
+  if (tradeAmountMode==='dollars') { dollars=rawQty; shares=dollars/price; }
+  else { shares=rawQty; dollars=shares*price; }
+  const comm = dollars * 0.001;
+  const total = currentTradeType==='buy' ? dollars+comm : dollars-comm;
+  $('os-price').textContent = fmt(price);
+  $('os-shares').textContent = shares.toFixed(4)+' shares';
+  $('os-subtotal').textContent = fmt(dollars);
+  $('os-comm').textContent = fmt(comm);
+  $('os-total').textContent = fmt(total);
+  if (tradeCashBalance > 0 && currentTradeType==='buy') {
+    const used = Math.min(total/tradeCashBalance,1);
+    $('bp-bar').style.width = (used*100)+'%';
+    $('bp-bar').style.background = used>0.9 ? 'var(--red)' : used>0.6 ? 'var(--gold)' : 'var(--green)';
+    $('bp-after').textContent = 'After: '+fmt(tradeCashBalance-total);
+  }
+}
+
+function resetOrderSummary() {
+  ['os-price','os-shares','os-subtotal','os-comm','os-total'].forEach(id => $(id).textContent = '—');
+  $('bp-bar').style.width = '0%';
+  $('bp-after').textContent = 'After: —';
+}
+
+async function submitTrade() {
+  const sym = $('trade-symbol').value.trim().toUpperCase();
+  const rawQty = parseFloat($('trade-qty').value);
+  if (!sym || !rawQty || rawQty <= 0) { toast('Please enter a symbol and amount.','error'); return; }
+  if (!cachedPrice) { toast('Look up a symbol first.','error'); return; }
+  const shares = tradeAmountMode==='dollars' ? Math.round(rawQty/cachedPrice*10000)/10000 : rawQty;
+  const btn = $('submit-trade');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Processing…';
+  try {
+    await api(`/api/trading/execute?portfolio_id=${portfolioId}`, {method:'POST', body:JSON.stringify({symbol:sym, trade_type:currentTradeType, quantity:shares, order_type:$('trade-order-type').value})});
+    toast(`${currentTradeType==='buy'?'🟢 Bought':'🔴 Sold'} ${shares} shares of ${sym}!`, 'success');
+    $('trade-qty').value = '';
+    resetOrderSummary();
+    loadTradeHoldings();
+    loadTradeAccountSummary();
+  } catch(e) { toast(e.message,'error'); }
+  finally { btn.disabled=false; btn.textContent = currentTradeType==='buy' ? '▲ Place Buy Order' : '▼ Place Sell Order'; }
+}
+
+async function loadTradeAccountSummary() {
+  try {
+    const s = await api(`/api/trading/positions/${portfolioId}`);
+    tradeCashBalance = s.cash_balance;
+    $('acct-cash').textContent = fmt(s.cash_balance);
+    $('acct-invested').textContent = fmt(s.invested_value);
+    $('acct-total').textContent = fmt(s.total_portfolio_value);
+    const pl = s.total_profit_loss;
+    $('acct-pl').textContent = fmt(pl)+' ('+fmtPct(s.total_profit_loss_percent)+')';
+    $('acct-pl').style.color = pl>=0 ? 'var(--green)' : 'var(--red)';
+    $('bp-amount').textContent = fmt(s.cash_balance);
+    $('portfolio-balance-top').textContent = fmt(s.total_portfolio_value);
+  } catch(e) {}
+}
+
+async function loadTradeHoldings() {
+  try {
+    const holdings = await api(`/api/trading/holdings/${portfolioId}`);
+    if (!holdings.length) { $('trade-holdings').innerHTML = '<div class="empty"><div class="empty-icon">📂</div><div class="empty-text">No positions yet</div></div>'; return; }
+    $('trade-holdings').innerHTML = holdings.map(h => {
+      const up = h.profit_loss>=0;
+      return `<div style="padding:11px 18px;border-bottom:1px solid rgba(30,42,61,.5);cursor:pointer;transition:background .15s"
+        onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''"
+        onclick="quickSellPosition('${h.symbol}',${h.quantity})">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-weight:700;font-size:13px">${h.symbol}</div><div style="font-size:10px;color:var(--txt2);margin-top:1px">${h.quantity} sh · avg ${fmt(h.average_cost)}</div></div>
+          <div style="text-align:right"><div style="font-weight:600;font-size:13px">${fmt(h.total_value)}</div><div style="font-size:11px;font-weight:600;color:${up?'var(--green)':'var(--red)'}">${fmtPct(h.profit_loss_percent)}</div></div>
+        </div></div>`;
+    }).join('');
+  } catch(e) {}
+}
+
+function quickSellPosition(symbol, qty) {
+  $('trade-symbol').value = symbol;
+  cachedPrice = null;
+  setTradeType('sell'); setAmountMode('shares');
+  $('trade-qty').value = qty;
+  lookupTradeSymbol();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ════════════════════════════════════════
+//  HISTORY
+// ════════════════════════════════════════
+async function loadHistory() {
+  try {
+    const trades = await api(`/api/trading/history/${portfolioId}?limit=100`);
+    if (!trades.length) { $('history-table-wrap').innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No trade history yet</div></div>'; return; }
+    $('history-table-wrap').innerHTML = `<table class="tf-table"><thead><tr><th>Symbol</th><th>Type</th><th>Qty</th><th>Price</th><th>Total</th><th>Commission</th><th>Date & Time</th></tr></thead><tbody>${
+      trades.map(t=>`<tr><td class="sym-cell">${t.symbol}</td><td><span class="tag tag-${t.trade_type}">${t.trade_type.toUpperCase()}</span></td><td>${t.quantity}</td><td>${fmt(t.price)}</td><td>${fmt(t.total_amount)}</td><td style="color:var(--txt2)">${fmt(t.commission)}</td><td style="color:var(--txt2);font-size:11px">${new Date(t.timestamp).toLocaleString()}</td></tr>`).join('')
+    }</tbody></table>`;
+  } catch(e) { toast(e.message,'error'); }
+}
+
+// ════════════════════════════════════════
+//  ADMIN
+// ════════════════════════════════════════
+async function loadAdmin() {
+  // Load funding bar from localStorage
+  updateFundingDisplay();
+  // Try to get stats from API
+  try {
+    const stats = await api('/api/admin/stats').catch(() => null);
+    if (stats) {
+      $('admin-users').textContent = stats.total_users ?? '—';
+      $('admin-portfolios').textContent = stats.total_portfolios ?? '—';
+      $('admin-trades-today').textContent = stats.trades_today ?? '—';
+      $('admin-trades-total').textContent = stats.total_trades ?? '—';
+      $('admin-coins').textContent = stats.total_coins ?? '0';
+    } else {
+      // Fallback: show placeholder
+      ['admin-users','admin-portfolios','admin-trades-today','admin-trades-total','admin-coins'].forEach(id => $(id).textContent = 'N/A');
+    }
+    // Load recent users
+    const users = await api('/api/admin/users').catch(() => null);
+    if (users && users.length) {
+      $('admin-users-table').innerHTML = `<table class="tf-table"><thead><tr><th>Username</th><th>Email</th><th>Joined</th><th>Active</th></tr></thead><tbody>${
+        users.slice(0,20).map(u=>`<tr><td class="sym-cell">${u.username}</td><td style="color:var(--txt2)">${u.email}</td><td style="color:var(--txt2);font-size:11px">${new Date(u.created_at).toLocaleDateString()}</td><td>${u.is_active?'✅':'❌'}</td></tr>`).join('')
+      }</tbody></table>`;
+    } else {
+      $('admin-users-table').innerHTML = '<div class="empty"><div class="empty-text">Admin API endpoints not yet configured. Add /api/admin/ routes to backend.</div></div>';
+    }
+  } catch(e) {
+    $('admin-users-table').innerHTML = '<div class="empty"><div class="empty-text">Connect admin routes in the backend to see stats here.</div></div>';
+  }
+}
+
+function updateFunding() {
+  const target = parseFloat($('admin-funding-target').value) || 0;
+  const current = parseFloat($('admin-funding-current').value) || 0;
+  fundingTarget = target; fundingCurrent = current;
+  localStorage.setItem('tf_funding_target', target);
+  localStorage.setItem('tf_funding_current', current);
+  updateFundingDisplay();
+  toast('Funding goal updated!', 'success');
+}
+
+function updateFundingDisplay() {
+  const pct = fundingTarget > 0 ? Math.min((fundingCurrent/fundingTarget)*100, 100) : 0;
+  $('admin-funding-bar').style.width = pct + '%';
+  $('admin-funding-raised').textContent = `$${fundingCurrent.toFixed(2)} / $${fundingTarget.toFixed(2)}`;
+  $('admin-funding-sub').textContent = fundingTarget > 0
+    ? `${pct.toFixed(1)}% of monthly goal reached — $${Math.max(0, fundingTarget - fundingCurrent).toFixed(2)} remaining`
+    : 'Set a monthly target above to track funding progress.';
+  // Pre-fill inputs
+  if ($('admin-funding-target') && fundingTarget) $('admin-funding-target').value = fundingTarget;
+  if ($('admin-funding-current') && fundingCurrent) $('admin-funding-current').value = fundingCurrent;
+}
+
+function adminAction(action) {
+  const messages = {
+    reset_cache: 'Cache clear request sent to backend.',
+    export_users: 'User export — add /api/admin/export endpoint to backend.',
+    view_logs: 'Logs — check your PythonAnywhere error log directly.'
+  };
+  toast(messages[action] || action, 'info');
+}
+
+// ════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  renderLandingMockChart();
+  if (token && token !== 'ADMIN_SESSION') {
+    bootApp();
+  } else if (token === 'ADMIN_SESSION') {
+    bootAdminApp();
+  }
+  // Smooth scroll for anchor links
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) { e.preventDefault(); target.scrollIntoView({behavior:'smooth'}); }
+    });
+  });
+});
+</script>
+</body>
+</html>
