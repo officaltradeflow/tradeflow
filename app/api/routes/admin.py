@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime, timedelta
 import logging
+import os
 
 from app.database.database import get_db
 from app.database.models import User, Portfolio, Trade, Holding
@@ -12,11 +13,18 @@ from app.database.models import User, Portfolio, Trade, Holding
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-ADMIN_TOKEN = "ADMIN_SESSION"
+# SECURITY: avoid hardcoding tokens in code
+# Set this in your environment, e.g. ADMIN_SESSION="your-secret"
+ADMIN_TOKEN = os.getenv("ADMIN_SESSION", "")
 
 
 def require_admin(authorization: Optional[str] = Header(None)):
-    if authorization != f"Bearer {ADMIN_TOKEN}":
+    if not ADMIN_TOKEN:
+        # Fail closed if not configured
+        raise HTTPException(500, "Admin access is not configured")
+
+    expected = f"Bearer {ADMIN_TOKEN}"
+    if authorization != expected:
         raise HTTPException(403, "Admin access required")
 
 
@@ -45,7 +53,7 @@ class AdminUserEntry(BaseModel):
 @router.get("/stats", response_model=AdminStats)
 def get_admin_stats(
     db: Session = Depends(get_db),
-    _: None = Depends(require_admin)
+    _: None = Depends(require_admin),
 ):
     now = datetime.utcnow()
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -54,8 +62,14 @@ def get_admin_stats(
     total_users = db.query(func.count(User.id)).scalar()
     total_portfolios = db.query(func.count(Portfolio.id)).scalar()
     total_trades = db.query(func.count(Trade.id)).scalar()
-    trades_today = db.query(func.count(Trade.id)).filter(Trade.timestamp >= today_start).scalar()
-    active_7d = db.query(func.count(Trade.user_id.distinct())).filter(Trade.timestamp >= week_ago).scalar()
+    trades_today = (
+        db.query(func.count(Trade.id)).filter(Trade.timestamp >= today_start).scalar()
+    )
+    active_7d = (
+        db.query(func.count(Trade.user_id.distinct()))
+        .filter(Trade.timestamp >= week_ago)
+        .scalar()
+    )
 
     return AdminStats(
         total_users=total_users,
@@ -64,14 +78,14 @@ def get_admin_stats(
         trades_today=trades_today,
         total_coins=0,
         active_users_7d=active_7d,
-        server_status="online"
+        server_status="online",
     )
 
 
 @router.get("/users", response_model=List[AdminUserEntry])
 def get_all_users(
     db: Session = Depends(get_db),
-    _: None = Depends(require_admin)
+    _: None = Depends(require_admin),
 ):
     return db.query(User).order_by(User.created_at.desc()).limit(100).all()
 
@@ -80,7 +94,7 @@ def get_all_users(
 def deactivate_user(
     user_id: int,
     db: Session = Depends(get_db),
-    _: None = Depends(require_admin)
+    _: None = Depends(require_admin),
 ):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
@@ -94,7 +108,7 @@ def deactivate_user(
 def activate_user(
     user_id: int,
     db: Session = Depends(get_db),
-    _: None = Depends(require_admin)
+    _: None = Depends(require_admin),
 ):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
@@ -113,7 +127,7 @@ def reset_cache(_: None = Depends(require_admin)):
 def get_recent_trades(
     limit: int = 50,
     db: Session = Depends(get_db),
-    _: None = Depends(require_admin)
+    _: None = Depends(require_admin),
 ):
     trades = (
         db.query(Trade, User.username)
@@ -131,7 +145,7 @@ def get_recent_trades(
             "quantity": t.Trade.quantity,
             "price": t.Trade.price,
             "total_amount": t.Trade.total_amount,
-            "timestamp": t.Trade.timestamp.isoformat()
+            "timestamp": t.Trade.timestamp.isoformat(),
         }
         for t in trades
     ]
