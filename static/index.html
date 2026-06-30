@@ -1241,7 +1241,7 @@ async function doLogin() {
   if (!u || !p) { $('login-error').textContent = 'Please fill all fields.'; return; }
   // Admin check
   if (u === ADMIN_USERNAME && p === ADMIN_PASSWORD_HASH) {
-    token = 'ADMIN_SESSION';
+    token = 'tf_admin_8f3k9d2m1x7q4w6e';
     localStorage.setItem('tf_token', token);
     currentUser = { username: 'Admin', id: 0, is_admin: true };
     bootAdminApp();
@@ -1867,9 +1867,9 @@ function adminAction(action) {
 // ════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', () => {
   renderLandingMockChart();
-  if (token && token !== 'ADMIN_SESSION') {
+  if (token && token !== 'tf_admin_8f3k9d2m1x7q4w6e') {
     bootApp();
-  } else if (token === 'ADMIN_SESSION') {
+  } else if (token === 'tf_admin_8f3k9d2m1x7q4w6e') {
     bootAdminApp();
   }
   // Smooth scroll for anchor links
