@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 # SECURITY: avoid hardcoding tokens in code
 # Set this in your environment, e.g. ADMIN_SESSION="your-secret"
-ADMIN_TOKEN = os.getenv("ADMIN_SESSION", "")
+ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "")
 
 
 def require_admin(authorization: Optional[str] = Header(None)):
