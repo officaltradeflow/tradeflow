@@ -922,3 +922,68 @@
 <script src="/static/app.js"></script>
 </body>
 </html>
+    </main>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<div class="modal-overlay" id="forgot-modal">
+  <div class="modal-box">
+    <div class="modal-title">Reset Password</div>
+    <div class="modal-sub">Enter your email address and we'll send you a password reset link. Make sure your email server (SMTP) is configured on the backend.</div>
+    <div class="form-group"><label>Email Address</label><input type="email" id="forgot-email" placeholder="your@email.com" /></div>
+    <div class="auth-error" id="forgot-error"></div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" data-oc="closeModal('forgot-modal')">Cancel</button>
+      <button class="btn-modal-submit" data-oc="doForgotPassword()">Send Reset Link</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="privacy-modal">
+  <div class="policy-modal-box">
+    <button class="policy-close" data-oc="closeModal('privacy-modal')">×</button>
+    <h2>🔒 Privacy Policy</h2>
+    <p><strong>Last updated: 2025</strong></p>
+    <h3>1. What We Collect</h3>
+    <p>We collect your username, email address, and hashed (encrypted) password when you register. We also store your virtual trade history and portfolio data for the purpose of running the simulation.</p>
+    <h3>2. How We Use Your Data</h3>
+    <p>Your data is used solely to operate TradeFlow. We do not sell, rent, or share your personal data with third parties for marketing purposes. Email addresses are used only for account recovery.</p>
+    <h3>3. Data Security</h3>
+    <p>All passwords are hashed using bcrypt before storage — we never store plain-text passwords. All connections are encrypted via HTTPS. hCaptcha is used to protect forms from automated abuse.</p>
+    <h3>4. Cookies & Storage</h3>
+    <p>We use localStorage to store your session token on your device. No advertising cookies are used. hCaptcha may set cookies governed by their own privacy policy.</p>
+    <h3>5. Your Rights</h3>
+    <p>You may request deletion of your account and all associated data at any time by contacting us. You have the right to access, rectify, and erase your personal data.</p>
+    <h3>6. Contact</h3>
+    <p>For privacy concerns, please contact the site administrator.</p>
+    <div style="margin-top:20px;text-align:right">
+      <button data-oc="closeModal('privacy-modal')" style="padding:10px 24px;background:var(--green);color:#000;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:var(--font-mono)">Got it</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="disclaimer-modal">
+  <div class="policy-modal-box">
+    <button class="policy-close" data-oc="closeModal('disclaimer-modal')">×</button>
+    <h2>⚠️ Important Disclaimer</h2>
+    <h3>This is a Simulation</h3>
+    <p>TradeFlow is a <strong>stock market simulator</strong> designed for educational and entertainment purposes only. All trades, portfolios, and balances use <strong>virtual money</strong> — no real currency is involved at any point.</p>
+    <h3>Not Financial Advice</h3>
+    <p>Nothing on TradeFlow constitutes financial, investment, or trading advice. The platform does not recommend buying or selling any real securities. Past simulated performance does not indicate future real-world results.</p>
+    <h3>Market Data</h3>
+    <p>Price data is sourced from Yahoo Finance and may be delayed. Data accuracy is not guaranteed. Do not make real investment decisions based on this platform.</p>
+    <h3>No Real Money</h3>
+    <p>TradeFlow does not handle, process, or hold real money. There are no real monetary prizes. Any "TradeCoins" or competition rewards are virtual and have no real-world monetary value.</p>
+    <h3>Use at Your Own Risk</h3>
+    <p>By using TradeFlow, you acknowledge this is a simulation and agree not to hold the developers liable for any decisions made based on the platform.</p>
+    <div style="margin-top:20px;text-align:right">
+      <button data-oc="closeModal('disclaimer-modal')" style="padding:10px 24px;background:var(--gold);color:#000;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:var(--font-mono)">I Understand</button>
+    </div>
+  </div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
