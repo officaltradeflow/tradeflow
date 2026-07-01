@@ -391,10 +391,10 @@
     </div>
     <div class="land-nav-links">
       <a href="#features">Features</a>
-      <a href="#" data-oc="openModal('privacy-modal')">Privacy</a>
-      <a href="#" data-oc="openModal('disclaimer-modal')">Disclaimer</a>
-      <button class="btn-launch" data-oc="showAuth('login')">Sign In</button>
-      <button class="btn-launch" style="background:transparent;color:var(--green);border:1px solid var(--green)" data-oc="showAuth('register')">Get Started Free</button>
+      <a href="#" data-action="open-privacy">Privacy</a>
+      <a href="#" data-action="open-disclaimer">Disclaimer</a>
+      <button class="btn-launch" data-action="show-login">Sign In</button>
+      <button class="btn-launch" style="background:transparent;color:var(--green);border:1px solid var(--green)" data-action="show-register">Get Started Free</button>
     </div>
   </nav>
 
@@ -403,8 +403,8 @@
     <h1>Trade Stocks.<br><span class="accent">Risk-Free.</span></h1>
     <p class="hero-sub">TradeFlow gives you $100,000 in virtual cash to practise real trading strategies — live market data, professional tools, zero risk.</p>
     <div class="hero-ctas">
-      <button class="btn-cta-primary" data-oc="showAuth('register')">Start Trading Free →</button>
-      <button class="btn-cta-secondary" data-oc="showAuth('login')">I have an account</button>
+      <button class="btn-cta-primary" data-action="show-register">Start Trading Free →</button>
+      <button class="btn-cta-secondary" data-action="show-login">I have an account</button>
     </div>
   </section>
 
@@ -455,9 +455,9 @@
   <footer class="land-footer">
     <div>© 2025 TradeFlow · For educational use only · Not financial advice</div>
     <div class="footer-links">
-      <a data-oc="openModal('privacy-modal')">Privacy Policy</a>
-      <a data-oc="openModal('disclaimer-modal')">Disclaimer</a>
-      <a data-oc="showAuth('register')">Get Started</a>
+      <a data-action="open-privacy">Privacy Policy</a>
+      <a data-action="open-disclaimer">Disclaimer</a>
+      <a data-action="show-register">Get Started</a>
     </div>
   </footer>
 </div>
@@ -469,8 +469,8 @@
       <span>TradeFlow</span>
     </div>
     <div class="auth-tabs">
-      <div class="auth-tab active" data-oc="switchTab('login')">Sign In</div>
-      <div class="auth-tab" data-oc="switchTab('register')">Create Account</div>
+      <div class="auth-tab active" data-action="tab-login">Sign In</div>
+      <div class="auth-tab" data-action="tab-register">Create Account</div>
     </div>
 
     <div id="login-form">
@@ -479,13 +479,13 @@
         <label>Password</label>
         <input type="password" id="login-password" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doLogin()" />
       </div>
-      <div class="forgot-link"><a data-oc="openModal('forgot-modal')">Forgot password?</a></div>
+      <div class="forgot-link"><a data-action="open-forgot">Forgot password?</a></div>
       <div class="hcaptcha-wrap">
         <div class="h-captcha" data-sitekey="10000000-ffff-ffff-ffff-000000000001" data-theme="dark" id="login-captcha"></div>
       </div>
-      <button class="btn-primary" data-oc="doLogin()">Sign In</button>
+      <button class="btn-primary" data-action="do-login">Sign In</button>
       <div class="auth-error" id="login-error"></div>
-      <div class="auth-disclaimer">By signing in you agree to our <a data-oc="openModal('privacy-modal')">Privacy Policy</a> and acknowledge this is a <a data-oc="openModal('disclaimer-modal')">simulation only</a>.</div>
+      <div class="auth-disclaimer">By signing in you agree to our <a data-action="open-privacy">Privacy Policy</a> and acknowledge this is a <a data-action="open-disclaimer">simulation only</a>.</div>
     </div>
 
     <div id="register-form" style="display:none">
@@ -496,13 +496,13 @@
       <div class="hcaptcha-wrap">
         <div class="h-captcha" data-sitekey="10000000-ffff-ffff-ffff-000000000001" data-theme="dark" id="reg-captcha"></div>
       </div>
-      <button class="btn-primary" data-oc="doRegister()">Create Account</button>
+      <button class="btn-primary" data-action="do-register">Create Account</button>
       <div class="auth-error" id="reg-error"></div>
-      <div class="auth-disclaimer">By creating an account you agree to our <a data-oc="openModal('privacy-modal')">Privacy Policy</a>. This is a <a data-oc="openModal('disclaimer-modal')">simulation — no real money</a>.</div>
+      <div class="auth-disclaimer">By creating an account you agree to our <a data-action="open-privacy">Privacy Policy</a>. This is a <a data-action="open-disclaimer">simulation — no real money</a>.</div>
     </div>
 
     <div style="text-align:center;margin-top:16px">
-      <a data-oc="showLanding()" style="font-size:12px;color:var(--txt3);cursor:pointer;text-decoration:none;">← Back to home</a>
+      <a data-action="show-landing" style="font-size:12px;color:var(--txt3);cursor:pointer;text-decoration:none;">← Back to home</a>
     </div>
   </div>
 </div>
@@ -517,15 +517,15 @@
       </div>
       <nav class="sidebar-nav">
         <div class="nav-section-label">Overview</div>
-        <div class="nav-item active" data-oc="navigate('dashboard')"><span class="nav-icon">📊</span> Dashboard</div>
-        <div class="nav-item" data-oc="navigate('markets')"><span class="nav-icon">🌐</span> Markets</div>
+        <div class="nav-item active" data-action="nav-dashboard"><span class="nav-icon">📊</span> Dashboard</div>
+        <div class="nav-item" data-action="nav-markets"><span class="nav-icon">🌐</span> Markets</div>
         <div class="nav-section-label">My Account</div>
-        <div class="nav-item" data-oc="navigate('portfolio')"><span class="nav-icon">💼</span> Portfolio</div>
-        <div class="nav-item" data-oc="navigate('trade')"><span class="nav-icon">⚡</span> Trade</div>
-        <div class="nav-item" data-oc="navigate('history')"><span class="nav-icon">📋</span> History</div>
+        <div class="nav-item" data-action="nav-portfolio"><span class="nav-icon">💼</span> Portfolio</div>
+        <div class="nav-item" data-action="nav-trade"><span class="nav-icon">⚡</span> Trade</div>
+        <div class="nav-item" data-action="nav-history"><span class="nav-icon">📋</span> History</div>
         <div class="nav-section-label">Compete</div>
-        <div class="nav-item" data-oc="navigate('competitions')"><span class="nav-icon">🏆</span> Competitions</div>
-        <div id="admin-nav-item" style="display:none" class="nav-item" data-oc="navigate('admin')"><span class="nav-icon">⚙️</span> Admin</div>
+        <div class="nav-item" data-action="nav-competitions"><span class="nav-icon">🏆</span> Competitions</div>
+        <div id="admin-nav-item" style="display:none" class="nav-item" data-action="nav-admin"><span class="nav-icon">⚙️</span> Admin</div>
       </nav>
       <div class="sidebar-footer">
         <div class="user-pill">
@@ -534,7 +534,7 @@
             <div class="user-name" id="user-name">—</div>
             <div class="user-coins">🪙 <span id="user-coins-display">0</span> TC</div>
           </div>
-          <button class="logout-btn" data-oc="doLogout()" title="Sign out">⏻</button>
+          <button class="logout-btn" data-action="do-logout" title="Sign out">⏻</button>
         </div>
       </div>
     </aside>
@@ -588,7 +588,7 @@
           <div class="search-bar">
             <span style="color:var(--txt3)">🔍</span>
             <input type="text" id="market-search" placeholder="Search stocks… (e.g. AAPL, TSLA)" onkeydown="if(event.key==='Enter')searchMarket()" />
-            <button class="btn-trade buy" style="width:auto;padding:7px 16px;border-radius:7px;font-size:12px" data-oc="searchMarket()">Search</button>
+            <button class="btn-trade buy" style="width:auto;padding:7px 16px;border-radius:7px;font-size:12px" data-action="search-market">Search</button>
           </div>
           <div id="quote-view" style="display:none" class="card mb-18">
             <div class="quote-header">
@@ -599,16 +599,16 @@
                   <div class="quote-price" id="q-price">$—</div>
                   <div class="quote-change" id="q-change">—</div>
                 </div>
-                <button class="btn-join" data-oc="quickTrade()" style="margin-top:6px">Trade →</button>
+                <button class="btn-join" data-action="quick-trade" style="margin-top:6px">Trade →</button>
               </div>
             </div>
             <div class="card-body">
               <div class="chart-tabs">
-                <button class="chart-tab active" data-oc="loadChart('1d','1m',this)">1D</button>
-                <button class="chart-tab" data-oc="loadChart('5d','5m',this)">5D</button>
-                <button class="chart-tab" data-oc="loadChart('1mo','1d',this)">1M</button>
-                <button class="chart-tab" data-oc="loadChart('3mo','1d',this)">3M</button>
-                <button class="chart-tab" data-oc="loadChart('1y','1wk',this)">1Y</button>
+                <button class="chart-tab active" data-action="chart-1d">1D</button>
+                <button class="chart-tab" data-action="chart-5d">5D</button>
+                <button class="chart-tab" data-action="chart-1mo">1M</button>
+                <button class="chart-tab" data-action="chart-3mo">3M</button>
+                <button class="chart-tab" data-action="chart-1y">1Y</button>
               </div>
               <div class="chart-wrap"><canvas id="price-chart"></canvas></div>
             </div>
@@ -650,7 +650,7 @@
                   <input type="text" id="trade-symbol" placeholder="Ticker — e.g. AAPL, TSLA, NVDA"
                     style="flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--txt);padding:11px 14px;border-radius:9px;font-size:14px;font-weight:600;font-family:var(--font-mono);outline:none;text-transform:uppercase;letter-spacing:.5px"
                     onkeydown="if(event.key==='Enter')lookupTradeSymbol()" oninput="this.value=this.value.toUpperCase()" />
-                  <button data-oc="lookupTradeSymbol()" style="padding:11px 22px;background:var(--blue);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-mono);white-space:nowrap">Look Up →</button>
+                  <button data-action="lookup-symbol" style="padding:11px 22px;background:var(--blue);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-mono);white-space:nowrap">Look Up →</button>
                 </div>
                 <div id="trade-quick-picks" style="display:flex;gap:5px;flex-wrap:wrap"></div>
               </div>
@@ -677,11 +677,11 @@
                 </div>
                 <div style="padding:14px 18px 18px">
                   <div style="display:flex;gap:3px;margin-bottom:10px" id="trade-chart-tabs">
-                    <button class="chart-tab active" data-oc="loadTradeChart('1d','1m',this)">1D</button>
-                    <button class="chart-tab" data-oc="loadTradeChart('5d','5m',this)">5D</button>
-                    <button class="chart-tab" data-oc="loadTradeChart('1mo','1d',this)">1M</button>
-                    <button class="chart-tab" data-oc="loadTradeChart('3mo','1d',this)">3M</button>
-                    <button class="chart-tab" data-oc="loadTradeChart('1y','1wk',this)">1Y</button>
+                    <button class="chart-tab active" data-action="tchart-1d">1D</button>
+                    <button class="chart-tab" data-action="tchart-5d">5D</button>
+                    <button class="chart-tab" data-action="tchart-1mo">1M</button>
+                    <button class="chart-tab" data-action="tchart-3mo">3M</button>
+                    <button class="chart-tab" data-action="tchart-1y">1Y</button>
                   </div>
                   <div style="position:relative;height:220px"><canvas id="trade-mini-chart"></canvas></div>
                   <div style="font-size:10px;color:var(--txt3);margin-top:6px;text-align:right" id="trade-last-updated">—</div>
@@ -704,14 +704,14 @@
 
               <div class="card" id="trade-order-card" style="display:none;padding:18px">
                 <div style="display:flex;background:var(--bg2);border-radius:9px;padding:3px;margin-bottom:16px">
-                  <button class="trade-btn buy active" id="tab-buy" data-oc="setTradeType('buy')" style="flex:1;padding:10px;font-size:13px;font-weight:700;border-radius:7px">▲ Buy</button>
-                  <button class="trade-btn sell" id="tab-sell" data-oc="setTradeType('sell')" style="flex:1;padding:10px;font-size:13px;font-weight:700;border-radius:7px">▼ Sell</button>
+                  <button class="trade-btn buy active" id="tab-buy" data-action="trade-buy" style="flex:1;padding:10px;font-size:13px;font-weight:700;border-radius:7px">▲ Buy</button>
+                  <button class="trade-btn sell" id="tab-sell" data-action="trade-sell" style="flex:1;padding:10px;font-size:13px;font-weight:700;border-radius:7px">▼ Sell</button>
                 </div>
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
                   <label style="font-size:10px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px">Amount</label>
                   <div style="display:flex;gap:3px;background:var(--bg2);padding:2px;border-radius:5px">
-                    <button id="mode-shares" data-oc="setAmountMode('shares')" style="padding:3px 10px;border:none;background:var(--card2);color:var(--txt);border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font-mono)">Shares</button>
-                    <button id="mode-dollars" data-oc="setAmountMode('dollars')" style="padding:3px 10px;border:none;background:none;color:var(--txt2);border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font-mono)">$ Dollars</button>
+                    <button id="mode-shares" data-action="mode-shares-btn" style="padding:3px 10px;border:none;background:var(--card2);color:var(--txt);border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font-mono)">Shares</button>
+                    <button id="mode-dollars" data-action="mode-dollars-btn" style="padding:3px 10px;border:none;background:none;color:var(--txt2);border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font-mono)">$ Dollars</button>
                   </div>
                 </div>
                 <div style="position:relative;margin-bottom:10px">
@@ -720,10 +720,10 @@
                     style="width:100%;background:var(--bg2);border:2px solid var(--border);color:var(--txt);padding:12px 14px;border-radius:9px;font-size:18px;font-weight:700;font-family:var(--font-mono);outline:none;transition:border-color .2s" />
                 </div>
                 <div style="display:flex;gap:5px;margin-bottom:14px">
-                  <button data-oc="quickFill(25)" class="qfill-btn">25%</button>
-                  <button data-oc="quickFill(50)" class="qfill-btn">50%</button>
-                  <button data-oc="quickFill(75)" class="qfill-btn">75%</button>
-                  <button data-oc="quickFill(100)" class="qfill-btn">Max</button>
+                  <button data-action="fill-25" class="qfill-btn">25%</button>
+                  <button data-action="fill-50" class="qfill-btn">50%</button>
+                  <button data-action="fill-75" class="qfill-btn">75%</button>
+                  <button data-action="fill-100" class="qfill-btn">Max</button>
                 </div>
                 <div style="display:flex;gap:7px;margin-bottom:14px">
                   <div style="flex:1">
@@ -754,7 +754,7 @@
                   </div>
                   <div style="font-size:10px;color:var(--txt2);margin-top:3px" id="bp-after">After: —</div>
                 </div>
-                <button class="btn-trade buy" id="submit-trade" data-oc="submitTrade()" style="font-size:14px;padding:14px;letter-spacing:.2px">Place Buy Order</button>
+                <button class="btn-trade buy" id="submit-trade" data-action="submit-trade-btn" style="font-size:14px;padding:14px;letter-spacing:.2px">Place Buy Order</button>
                 <div style="text-align:center;margin-top:10px;font-size:10px;color:var(--txt3)">⚠️ Virtual money only · No real funds</div>
               </div>
 
@@ -828,7 +828,7 @@
             <div style="display:flex;gap:10px;margin-top:12px">
               <input type="number" id="admin-funding-target" placeholder="Monthly target ($)" style="flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--txt);padding:9px 12px;border-radius:7px;font-size:13px;font-family:var(--font-mono);outline:none" />
               <input type="number" id="admin-funding-current" placeholder="Current raised ($)" style="flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--txt);padding:9px 12px;border-radius:7px;font-size:13px;font-family:var(--font-mono);outline:none" />
-              <button data-oc="updateFunding()" style="padding:9px 18px;background:var(--green);color:#000;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-mono)">Update</button>
+              <button data-action="update-funding" style="padding:9px 18px;background:var(--green);color:#000;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-mono)">Update</button>
             </div>
           </div>
 
@@ -849,9 +849,9 @@
           <div class="card" style="padding:20px">
             <div style="font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">Admin Controls</div>
             <div style="display:flex;gap:10px;flex-wrap:wrap">
-              <button data-oc="adminAction('reset_cache')" style="padding:9px 16px;background:var(--card2);border:1px solid var(--border);color:var(--txt);border-radius:7px;font-size:12px;cursor:pointer;font-family:var(--font-mono)">🔄 Clear Cache</button>
-              <button data-oc="adminAction('export_users')" style="padding:9px 16px;background:var(--card2);border:1px solid var(--border);color:var(--txt);border-radius:7px;font-size:12px;cursor:pointer;font-family:var(--font-mono)">📥 Export Users</button>
-              <button data-oc="adminAction('view_logs')" style="padding:9px 16px;background:var(--card2);border:1px solid var(--border);color:var(--txt);border-radius:7px;font-size:12px;cursor:pointer;font-family:var(--font-mono)">📋 View Logs</button>
+              <button data-action="admin-cache" style="padding:9px 16px;background:var(--card2);border:1px solid var(--border);color:var(--txt);border-radius:7px;font-size:12px;cursor:pointer;font-family:var(--font-mono)">🔄 Clear Cache</button>
+              <button data-action="admin-export" style="padding:9px 16px;background:var(--card2);border:1px solid var(--border);color:var(--txt);border-radius:7px;font-size:12px;cursor:pointer;font-family:var(--font-mono)">📥 Export Users</button>
+              <button data-action="admin-logs" style="padding:9px 16px;background:var(--card2);border:1px solid var(--border);color:var(--txt);border-radius:7px;font-size:12px;cursor:pointer;font-family:var(--font-mono)">📋 View Logs</button>
             </div>
           </div>
         </div>
@@ -870,15 +870,15 @@
     <div class="form-group"><label>Email Address</label><input type="email" id="forgot-email" placeholder="your@email.com" /></div>
     <div class="auth-error" id="forgot-error"></div>
     <div class="modal-actions">
-      <button class="btn-modal-cancel" data-oc="closeModal('forgot-modal')">Cancel</button>
-      <button class="btn-modal-submit" data-oc="doForgotPassword()">Send Reset Link</button>
+      <button class="btn-modal-cancel" data-action="close-forgot">Cancel</button>
+      <button class="btn-modal-submit" data-action="forgot-password">Send Reset Link</button>
     </div>
   </div>
 </div>
 
 <div class="modal-overlay" id="privacy-modal">
   <div class="policy-modal-box">
-    <button class="policy-close" data-oc="closeModal('privacy-modal')">×</button>
+    <button class="policy-close" data-action="close-privacy">×</button>
     <h2>🔒 Privacy Policy</h2>
     <p><strong>Last updated: 2025</strong></p>
     <h3>1. What We Collect</h3>
@@ -894,14 +894,14 @@
     <h3>6. Contact</h3>
     <p>For privacy concerns, please contact the site administrator.</p>
     <div style="margin-top:20px;text-align:right">
-      <button data-oc="closeModal('privacy-modal')" style="padding:10px 24px;background:var(--green);color:#000;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:var(--font-mono)">Got it</button>
+      <button data-action="close-privacy" style="padding:10px 24px;background:var(--green);color:#000;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:var(--font-mono)">Got it</button>
     </div>
   </div>
 </div>
 
 <div class="modal-overlay" id="disclaimer-modal">
   <div class="policy-modal-box">
-    <button class="policy-close" data-oc="closeModal('disclaimer-modal')">×</button>
+    <button class="policy-close" data-action="close-disclaimer">×</button>
     <h2>⚠️ Important Disclaimer</h2>
     <h3>This is a Simulation</h3>
     <p>TradeFlow is a <strong>stock market simulator</strong> designed for educational and entertainment purposes only. All trades, portfolios, and balances use <strong>virtual money</strong> — no real currency is involved at any point.</p>
@@ -914,72 +914,7 @@
     <h3>Use at Your Own Risk</h3>
     <p>By using TradeFlow, you acknowledge this is a simulation and agree not to hold the developers liable for any decisions made based on the platform.</p>
     <div style="margin-top:20px;text-align:right">
-      <button data-oc="closeModal('disclaimer-modal')" style="padding:10px 24px;background:var(--gold);color:#000;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:var(--font-mono)">I Understand</button>
-    </div>
-  </div>
-</div>
-
-<script src="/static/app.js"></script>
-</body>
-</html>
-    </main>
-  </div>
-</div>
-
-<div id="toast"></div>
-
-<div class="modal-overlay" id="forgot-modal">
-  <div class="modal-box">
-    <div class="modal-title">Reset Password</div>
-    <div class="modal-sub">Enter your email address and we'll send you a password reset link. Make sure your email server (SMTP) is configured on the backend.</div>
-    <div class="form-group"><label>Email Address</label><input type="email" id="forgot-email" placeholder="your@email.com" /></div>
-    <div class="auth-error" id="forgot-error"></div>
-    <div class="modal-actions">
-      <button class="btn-modal-cancel" data-oc="closeModal('forgot-modal')">Cancel</button>
-      <button class="btn-modal-submit" data-oc="doForgotPassword()">Send Reset Link</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="privacy-modal">
-  <div class="policy-modal-box">
-    <button class="policy-close" data-oc="closeModal('privacy-modal')">×</button>
-    <h2>🔒 Privacy Policy</h2>
-    <p><strong>Last updated: 2025</strong></p>
-    <h3>1. What We Collect</h3>
-    <p>We collect your username, email address, and hashed (encrypted) password when you register. We also store your virtual trade history and portfolio data for the purpose of running the simulation.</p>
-    <h3>2. How We Use Your Data</h3>
-    <p>Your data is used solely to operate TradeFlow. We do not sell, rent, or share your personal data with third parties for marketing purposes. Email addresses are used only for account recovery.</p>
-    <h3>3. Data Security</h3>
-    <p>All passwords are hashed using bcrypt before storage — we never store plain-text passwords. All connections are encrypted via HTTPS. hCaptcha is used to protect forms from automated abuse.</p>
-    <h3>4. Cookies & Storage</h3>
-    <p>We use localStorage to store your session token on your device. No advertising cookies are used. hCaptcha may set cookies governed by their own privacy policy.</p>
-    <h3>5. Your Rights</h3>
-    <p>You may request deletion of your account and all associated data at any time by contacting us. You have the right to access, rectify, and erase your personal data.</p>
-    <h3>6. Contact</h3>
-    <p>For privacy concerns, please contact the site administrator.</p>
-    <div style="margin-top:20px;text-align:right">
-      <button data-oc="closeModal('privacy-modal')" style="padding:10px 24px;background:var(--green);color:#000;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:var(--font-mono)">Got it</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="disclaimer-modal">
-  <div class="policy-modal-box">
-    <button class="policy-close" data-oc="closeModal('disclaimer-modal')">×</button>
-    <h2>⚠️ Important Disclaimer</h2>
-    <h3>This is a Simulation</h3>
-    <p>TradeFlow is a <strong>stock market simulator</strong> designed for educational and entertainment purposes only. All trades, portfolios, and balances use <strong>virtual money</strong> — no real currency is involved at any point.</p>
-    <h3>Not Financial Advice</h3>
-    <p>Nothing on TradeFlow constitutes financial, investment, or trading advice. The platform does not recommend buying or selling any real securities. Past simulated performance does not indicate future real-world results.</p>
-    <h3>Market Data</h3>
-    <p>Price data is sourced from Yahoo Finance and may be delayed. Data accuracy is not guaranteed. Do not make real investment decisions based on this platform.</p>
-    <h3>No Real Money</h3>
-    <p>TradeFlow does not handle, process, or hold real money. There are no real monetary prizes. Any "TradeCoins" or competition rewards are virtual and have no real-world monetary value.</p>
-    <h3>Use at Your Own Risk</h3>
-    <p>By using TradeFlow, you acknowledge this is a simulation and agree not to hold the developers liable for any decisions made based on the platform.</p>
-    <div style="margin-top:20px;text-align:right">
-      <button data-oc="closeModal('disclaimer-modal')" style="padding:10px 24px;background:var(--gold);color:#000;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:var(--font-mono)">I Understand</button>
+      <button data-action="close-disclaimer" style="padding:10px 24px;background:var(--gold);color:#000;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:var(--font-mono)">I Understand</button>
     </div>
   </div>
 </div>
