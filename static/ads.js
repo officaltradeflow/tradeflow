@@ -16,14 +16,17 @@ function incrementAdCount() {
 }
 
 async function detectAdBlocker() {
-  try {
-    await fetch('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js', {
-      method: 'HEAD', mode: 'no-cors', cache: 'no-store'
-    });
-    return false;
-  } catch {
-    return true;
-  }
+  return new Promise(resolve => {
+    const bait = document.createElement('div');
+    bait.className = 'ad-banner pub_300x250 pub_300x250m pub_728x90 text-ad textAd text_ad text_ads';
+    bait.style.cssText = 'position:absolute;left:-9999px;width:1px;height:1px';
+    document.body.appendChild(bait);
+    setTimeout(() => {
+      const blocked = !bait.offsetHeight || bait.style.display === 'none' || bait.offsetParent === null;
+      bait.remove();
+      resolve(blocked);
+    }, 100);
+  });
 }
 
 async function showAd() {
