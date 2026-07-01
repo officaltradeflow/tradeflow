@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TradeFlow — Stock Trading Simulator</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #080b14;
+      --bg2:       #0d1120;
+      --card:      #111827;
+      --card2:     #161d2e;
+      --border:    #1e2a3d;
+      --green:     #00e09e;
+      --green-dim: rgba(0,224,158,.1);
+      --red:       #ff4757;
+      --red-dim:   rgba(255,71,87,.1);
+      --blue:      #3b82f6;
+      --blue-dim:  rgba(59,130,246,.1);
+      --gold:      #f5a623;
+      --gold-dim:  rgba(245,166,35,.12);
+      --txt:       #e8edf8;
+      --txt2:      #6b7fa3;
+      --txt3:      #3a4a66;
+      --radius:    10px;
+      --sidebar:   230px;
+      --font-head: 'Syne', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+    }
+
+    body { font-family: var(--font-mono); background: var(--bg); color: var(--txt); min-height: 100vh; overflow-x: hidden; }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    #landing-screen { display: block; min-height: 100vh; background: var(--bg); overflow-x: hidden; }
+
+    .landing-bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+    .landing-bg::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,224,158,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,224,158,.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      animation: gridscroll 30s linear infinite;
+    }
+    .landing-bg::after {
+      content: '';
+      position: absolute;
+      width: 700px; height: 700px;
+      background: radial-gradient(ellipse, rgba(0,224,158,.07) 0%, transparent 70%);
+      top: -200px; right: -100px;
+      animation: float 8s ease-in-out infinite;
+    }
+    @keyframes gridscroll { to { background-position: 48px 48px; } }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-30px)} }
+
+    .land-nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 48px;
+      background: rgba(8,11,20,.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .land-logo { display: flex; align-items: center; gap: 10px; font-family: var(--font-head); font-size: 22px; font-weight: 800; }
+    .land-logo .logo-icon { width: 36px; height: 36px; background: var(--green); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 900; color: #000; }
+    .land-nav-links { display: flex; gap: 28px; align-items: center; }
+    .land-nav-links a { font-size: 13px; color: var(--txt2); text-decoration: none; transition: color .2s; }
+    .land-nav-links a:hover { color: var(--txt); }
+    .btn-launch { padding: 9px 22px; background: var(--green); color: #000; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: var(--font-mono); transition: opacity .2s; }
+    .btn-launch:hover { opacity: .85; }
+
+    .hero { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 120px 48px 80px; }
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--green-dim); border: 1px solid rgba(0,224,158,.2);
+      padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; color: var(--green);
+      margin-bottom: 28px; animation: fadein .6s ease;
+    }
+    .hero-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    @keyframes fadein { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
+
+    .hero h1 { font-family: var(--font-head); font-size: clamp(42px,7vw,88px); font-weight: 800; line-height: 1.05; letter-spacing: -2px; animation: fadein .7s .1s both; }
+    .hero h1 .accent { color: var(--green); }
+    .hero-sub { font-size: 17px; color: var(--txt2); max-width: 520px; line-height: 1.7; margin: 24px auto 44px; animation: fadein .7s .2s both; }
+    .hero-ctas { display: flex; gap: 14px; justify-content: center; animation: fadein .7s .3s both; }
+    .btn-cta-primary {
+      padding: 14px 36px; background: var(--green); color: #000; border: none; border-radius: 10px;
+      font-size: 15px; font-weight: 700; cursor: pointer; font-family: var(--font-mono);
+      transition: all .2s; box-shadow: 0 0 30px rgba(0,224,158,.25);
+    }
+    .btn-cta-primary:hover { transform: translateY(-2px); box-shadow: 0 0 50px rgba(0,224,158,.35); }
+    .btn-cta-secondary {
+      padding: 14px 36px; background: transparent; color: var(--txt); border: 1px solid var(--border);
+      border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: var(--font-mono);
+      transition: all .2s;
+    }
+    .btn-cta-secondary:hover { background: var(--card); border-color: var(--txt3); }
+
+    .disclaimer-banner {
+      position: relative; z-index: 1;
+      margin: 0 48px 60px;
+      background: var(--gold-dim); border: 1px solid rgba(245,166,35,.25);
+      border-radius: var(--radius); padding: 14px 20px;
+      display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--gold);
+      animation: fadein .7s .4s both;
+    }
+    .disclaimer-banner .disc-icon { font-size: 18px; flex-shrink: 0; }
+
+    .stats-row { position: relative; z-index: 1; display: flex; justify-content: center; gap: 60px; padding: 40px 48px 60px; animation: fadein .7s .4s both; }
+    .stat-item { text-align: center; }
+    .stat-value { font-family: var(--font-head); font-size: 36px; font-weight: 800; color: var(--green); }
+    .stat-label { font-size: 12px; color: var(--txt2); margin-top: 4px; }
+
+    .mockup-section { position: relative; z-index: 1; padding: 20px 48px 80px; display: flex; flex-direction: column; align-items: center; }
+    .mockup-label { font-size: 11px; font-weight: 600; color: var(--txt3); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px; }
+    .mockup-frame {
+      width: 100%; max-width: 1000px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden;
+      box-shadow: 0 40px 120px rgba(0,0,0,.6), 0 0 0 1px rgba(0,224,158,.06);
+      animation: fadein .9s .3s both;
+    }
+    .mockup-topbar { height: 42px; background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; padding: 0 16px; }
+    .mockup-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .mockup-url { flex: 1; margin: 0 12px; height: 22px; background: var(--bg); border-radius: 4px; display: flex; align-items: center; padding: 0 10px; font-size: 11px; color: var(--txt3); }
+    .mockup-inner { padding: 24px; display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+    .mock-kpi { background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+    .mock-kpi-label { font-size: 10px; color: var(--txt2); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .5px; }
+    .mock-kpi-value { font-family: var(--font-head); font-size: 22px; font-weight: 700; }
+    .mock-chart { grid-column: span 4; background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; height: 120px; display: flex; align-items: flex-end; gap: 3px; }
+    .mock-bar { flex: 1; border-radius: 3px 3px 0 0; opacity: .7; animation: barrise .8s ease both; }
+    @keyframes barrise { from{height:0!important} }
+
+    .features-section { position: relative; z-index: 1; padding: 80px 48px; background: linear-gradient(180deg, transparent, rgba(13,17,32,.8)); }
+    .section-heading { text-align: center; font-family: var(--font-head); font-size: 38px; font-weight: 800; margin-bottom: 12px; letter-spacing: -1px; }
+    .section-sub { text-align: center; color: var(--txt2); font-size: 15px; margin-bottom: 56px; }
+    .features-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; max-width: 1000px; margin: 0 auto; }
+    .feature-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 28px; transition: all .2s; }
+    .feature-card:hover { border-color: rgba(0,224,158,.25); transform: translateY(-3px); }
+    .feature-icon { font-size: 28px; margin-bottom: 14px; }
+    .feature-title { font-family: var(--font-head); font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .feature-desc { font-size: 13px; color: var(--txt2); line-height: 1.7; }
+
+    .land-footer { position: relative; z-index: 1; border-top: 1px solid var(--border); padding: 32px 48px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--txt3); }
+    .footer-links { display: flex; gap: 20px; }
+    .footer-links a { color: var(--txt3); text-decoration: none; cursor: pointer; transition: color .2s; }
+    .footer-links a:hover { color: var(--txt2); }
+
+    #auth-screen { display: none; min-height: 100vh; align-items: center; justify-content: center; background: radial-gradient(ellipse at 20% 60%, rgba(59,130,246,.06) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(0,224,158,.05) 0%, transparent 50%), var(--bg); }
+    .auth-box { width: 430px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 44px 40px; box-shadow: 0 24px 80px rgba(0,0,0,.6); }
+    .auth-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
+    .auth-logo .logo-icon { width: 34px; height: 34px; background: var(--green); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 900; color: #000; }
+    .auth-logo span { font-family: var(--font-head); font-size: 20px; font-weight: 800; }
+    .auth-tabs { display: flex; gap: 4px; background: var(--bg2); border-radius: 8px; padding: 4px; margin-bottom: 24px; }
+    .auth-tab { flex: 1; padding: 8px; text-align: center; font-size: 13px; font-weight: 500; cursor: pointer; border-radius: 6px; color: var(--txt2); transition: all .2s; font-family: var(--font-mono); }
+    .auth-tab.active { background: var(--card2); color: var(--txt); }
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 11px; font-weight: 500; color: var(--txt2); margin-bottom: 5px; letter-spacing: .5px; text-transform: uppercase; }
+    .form-group input {
+      width: 100%; background: var(--bg2); border: 1px solid var(--border); color: var(--txt);
+      padding: 11px 13px; border-radius: 8px; font-size: 14px; font-family: var(--font-mono); outline: none;
+      transition: border-color .2s;
+    }
+    .form-group input:focus { border-color: var(--blue); }
+    .btn-primary {
+      width: 100%; padding: 13px; background: var(--green); color: #000; font-weight: 700; font-size: 14px;
+      border: none; border-radius: 10px; cursor: pointer; margin-top: 6px; transition: opacity .2s, transform .1s;
+      font-family: var(--font-mono); letter-spacing: .3px;
+    }
+    .btn-primary:hover { opacity: .88; }
+    .btn-primary:active { transform: scale(.98); }
+    .auth-error { color: var(--red); font-size: 12px; margin-top: 8px; text-align: center; min-height: 16px; }
+    .forgot-link { text-align: right; margin-bottom: 4px; }
+    .forgot-link a { font-size: 12px; color: var(--blue); text-decoration: none; cursor: pointer; }
+    .forgot-link a:hover { text-decoration: underline; }
+    .hcaptcha-wrap { display: flex; justify-content: center; margin: 12px 0 6px; }
+    .auth-disclaimer { font-size: 11px; color: var(--txt3); text-align: center; margin-top: 14px; line-height: 1.6; }
+    .auth-disclaimer a { color: var(--txt2); text-decoration: underline; cursor: pointer; }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 300; display: none; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal-box { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 32px; width: 400px; box-shadow: 0 24px 80px rgba(0,0,0,.6); }
+    .modal-title { font-family: var(--font-head); font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .modal-sub { font-size: 13px; color: var(--txt2); margin-bottom: 20px; line-height: 1.6; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 16px; }
+    .btn-modal-cancel { flex: 1; padding: 11px; background: var(--bg2); border: 1px solid var(--border); color: var(--txt2); border-radius: 8px; cursor: pointer; font-family: var(--font-mono); font-size: 13px; }
+    .btn-modal-submit { flex: 1; padding: 11px; background: var(--blue); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-family: var(--font-mono); font-size: 13px; font-weight: 600; }
+
+    .policy-modal-box { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 36px; width: 600px; max-height: 80vh; overflow-y: auto; box-shadow: 0 24px 80px rgba(0,0,0,.6); }
+    .policy-modal-box h2 { font-family: var(--font-head); font-size: 22px; font-weight: 800; margin-bottom: 20px; }
+    .policy-modal-box h3 { font-family: var(--font-head); font-size: 15px; font-weight: 700; margin: 20px 0 8px; }
+    .policy-modal-box p { font-size: 13px; color: var(--txt2); line-height: 1.8; margin-bottom: 12px; }
+    .policy-close { float: right; background: none; border: none; color: var(--txt2); font-size: 22px; cursor: pointer; margin-top: -4px; }
+
+    #app-screen { display: none; min-height: 100vh; }
+    .shell { display: flex; }
+
+    .sidebar { width: var(--sidebar); min-height: 100vh; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; z-index: 100; }
+    .sidebar-logo { padding: 18px 16px 14px; display: flex; align-items: center; gap: 9px; border-bottom: 1px solid var(--border); }
+    .sidebar-logo .logo-icon { width: 30px; height: 30px; background: var(--green); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; color: #000; }
+    .sidebar-logo span { font-family: var(--font-head); font-size: 16px; font-weight: 800; }
+    .sidebar-nav { flex: 1; padding: 14px 10px; }
+    .nav-section-label { font-size: 9px; font-weight: 600; color: var(--txt3); letter-spacing: 1.2px; text-transform: uppercase; padding: 0 8px; margin: 14px 0 6px; }
+    .nav-item { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--txt2); transition: all .15s; margin-bottom: 1px; }
+    .nav-item:hover { background: var(--card); color: var(--txt); }
+    .nav-item.active { background: var(--green-dim); color: var(--green); }
+    .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+    .sidebar-footer { padding: 14px 10px; border-top: 1px solid var(--border); }
+    .user-pill { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border-radius: 7px; cursor: pointer; transition: background .15s; }
+    .user-pill:hover { background: var(--card); }
+    .user-avatar { width: 30px; height: 30px; background: var(--blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0; }
+    .user-name { font-size: 12px; font-weight: 600; }
+    .user-coins { font-size: 11px; color: var(--gold); margin-top: 1px; }
+    .logout-btn { background: none; border: none; color: var(--txt3); cursor: pointer; font-size: 15px; margin-left: auto; padding: 3px; }
+    .logout-btn:hover { color: var(--red); }
+
+    .main { margin-left: var(--sidebar); flex: 1; min-height: 100vh; }
+    .topbar { height: 58px; background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 26px; gap: 14px; position: sticky; top: 0; z-index: 50; }
+    .topbar-title { font-family: var(--font-head); font-size: 16px; font-weight: 700; flex: 1; }
+    .topbar-badge { display: flex; align-items: center; gap: 6px; background: var(--card); border: 1px solid var(--border); padding: 5px 12px; border-radius: 18px; font-size: 12px; font-weight: 500; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+    .coins-badge { display: flex; align-items: center; gap: 5px; background: var(--gold-dim); border: 1px solid rgba(245,166,35,.2); padding: 5px 12px; border-radius: 18px; font-size: 12px; font-weight: 600; color: var(--gold); }
+    .page-content { padding: 26px; max-width: 1400px; }
+
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); }
+    .card-header { padding: 16px 18px 0; display: flex; align-items: center; justify-content: space-between; }
+    .card-title { font-size: 11px; font-weight: 600; color: var(--txt2); text-transform: uppercase; letter-spacing: .8px; }
+    .card-body { padding: 14px 18px 18px; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+    .grid-main { display: grid; grid-template-columns: 1fr 320px; gap: 18px; }
+
+    .kpi { padding: 18px; }
+    .kpi-label { font-size: 11px; font-weight: 500; color: var(--txt2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+    .kpi-value { font-family: var(--font-head); font-size: 24px; font-weight: 700; letter-spacing: -.5px; }
+    .kpi-sub { font-size: 12px; margin-top: 3px; font-weight: 500; }
+    .up { color: var(--green); } .down { color: var(--red); } .neu { color: var(--txt2); }
+
+    .tf-table { width: 100%; border-collapse: collapse; }
+    .tf-table th { font-size: 10px; font-weight: 600; color: var(--txt2); text-transform: uppercase; letter-spacing: .6px; padding: 9px 13px; text-align: left; border-bottom: 1px solid var(--border); }
+    .tf-table td { padding: 11px 13px; font-size: 12px; border-bottom: 1px solid rgba(30,42,61,.5); }
+    .tf-table tr:last-child td { border-bottom: none; }
+    .tf-table tr:hover td { background: var(--card2); }
+    .sym-cell { font-weight: 700; font-size: 13px; }
+    .sym-name { font-size: 10px; color: var(--txt2); font-weight: 400; margin-top: 2px; }
+    .tag { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: .3px; }
+    .tag-buy { background: var(--green-dim); color: var(--green); }
+    .tag-sell { background: var(--red-dim); color: var(--red); }
+
+    .search-bar { display: flex; align-items: center; gap: 9px; background: var(--card); border: 1px solid var(--border); border-radius: 9px; padding: 9px 14px; margin-bottom: 18px; }
+    .search-bar input { flex: 1; background: none; border: none; color: var(--txt); font-size: 13px; font-family: var(--font-mono); outline: none; }
+    .search-bar input::placeholder { color: var(--txt3); }
+
+    .quote-header { padding: 18px; border-bottom: 1px solid var(--border); }
+    .quote-sym { font-family: var(--font-head); font-size: 26px; font-weight: 800; letter-spacing: -1px; }
+    .quote-name { font-size: 12px; color: var(--txt2); margin-top: 2px; }
+    .quote-price { font-family: var(--font-head); font-size: 34px; font-weight: 800; letter-spacing: -1px; margin-top: 10px; }
+    .quote-change { font-size: 14px; font-weight: 600; margin-top: 3px; }
+
+    .chart-wrap { position: relative; height: 260px; }
+    .chart-tabs { display: flex; gap: 3px; margin-bottom: 14px; }
+    .chart-tab { padding: 5px 11px; border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer; border: none; background: none; color: var(--txt2); transition: all .15s; font-family: var(--font-mono); }
+    .chart-tab.active { background: var(--card2); color: var(--txt); }
+
+    .trade-btn { flex: 1; padding: 10px; text-align: center; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .2s; border: none; background: none; font-family: var(--font-mono); }
+    .trade-btn.buy.active { background: var(--green); color: #000; }
+    .trade-btn.sell.active { background: var(--red); color: #fff; }
+    .trade-btn:not(.active) { color: var(--txt2); }
+
+    .input-group { margin-bottom: 13px; }
+    .input-group label { display: block; font-size: 10px; font-weight: 600; color: var(--txt2); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .5px; }
+    .input-group input, .input-group select {
+      width: 100%; background: var(--bg2); border: 1px solid var(--border); color: var(--txt);
+      padding: 10px 12px; border-radius: 7px; font-size: 13px; font-family: var(--font-mono); outline: none; transition: border-color .2s;
+    }
+    .input-group input:focus, .input-group select:focus { border-color: var(--blue); }
+    .input-group select option { background: var(--card2); }
+
+    .order-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 7px; }
+    .order-row:last-child { margin-bottom: 0; border-top: 1px solid var(--border); padding-top: 7px; font-weight: 700; }
+
+    .btn-trade { width: 100%; padding: 13px; font-weight: 700; font-size: 14px; border: none; border-radius: 9px; cursor: pointer; font-family: var(--font-mono); transition: all .2s; }
+    .btn-trade.buy { background: var(--green); color: #000; }
+    .btn-trade.sell { background: var(--red); color: #fff; }
+    .btn-trade:hover { opacity: .88; }
+    .btn-trade:active { transform: scale(.98); }
+
+    .qfill-btn { flex: 1; padding: 6px 0; background: var(--bg2); border: 1px solid var(--border); color: var(--txt2); border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: var(--font-mono); transition: all .15s; }
+    .qfill-btn:hover { background: var(--card2); color: var(--txt); border-color: var(--blue); }
+
+    .watch-item { display: flex; align-items: center; padding: 11px 18px; border-bottom: 1px solid rgba(30,42,61,.5); cursor: pointer; transition: background .15s; }
+    .watch-item:last-child { border-bottom: none; }
+    .watch-item:hover { background: var(--card2); }
+    .watch-sym { font-weight: 700; font-size: 13px; flex: 1; }
+    .watch-name { font-size: 10px; color: var(--txt2); }
+    .watch-price { font-size: 13px; font-weight: 600; text-align: right; }
+    .watch-chg { font-size: 11px; text-align: right; margin-top: 1px; font-weight: 500; }
+
+    .ring-wrap { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 6px 0; }
+    .ring-chart-box { width: 170px; height: 170px; flex-shrink: 0; position: relative; }
+    .ring-legend { width: 100%; display: flex; flex-wrap: wrap; gap: 7px 18px; justify-content: center; }
+    .ring-item { display: flex; align-items: center; gap: 7px; font-size: 12px; }
+    .ring-dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+
+    .comp-card { padding: 18px; display: flex; flex-direction: column; gap: 11px; }
+    .comp-name { font-family: var(--font-head); font-size: 15px; font-weight: 700; }
+    .comp-desc { font-size: 12px; color: var(--txt2); margin-top: 1px; }
+    .comp-badge { background: var(--blue-dim); color: var(--blue); padding: 3px 9px; border-radius: 18px; font-size: 10px; font-weight: 700; }
+    .comp-badge.ended { background: var(--red-dim); color: var(--red); }
+    .comp-stats { display: flex; gap: 18px; }
+    .comp-stat-label { font-size: 10px; color: var(--txt2); margin-bottom: 2px; }
+    .comp-stat-value { font-size: 13px; font-weight: 700; }
+    .btn-join { padding: 8px 18px; background: var(--blue); color: #fff; border: none; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--font-mono); transition: opacity .2s; }
+    .btn-join:hover { opacity: .85; }
+
+    .tape-wrap { position: relative; overflow: hidden; border-radius: var(--radius); }
+    .tape-overlay { position: absolute; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; background: rgba(8,11,20,.75); backdrop-filter: blur(3px); border-radius: var(--radius); }
+    .tape { background: var(--gold); color: #000; font-family: var(--font-head); font-size: 13px; font-weight: 800; padding: 10px 60px; transform: rotate(-5deg); letter-spacing: 2px; text-transform: uppercase; box-shadow: 0 4px 20px rgba(0,0,0,.4); white-space: nowrap; }
+
+    #toast { position: fixed; bottom: 26px; right: 26px; background: var(--card2); border: 1px solid var(--border); border-radius: 9px; padding: 12px 18px; font-size: 13px; font-weight: 500; box-shadow: 0 8px 32px rgba(0,0,0,.5); z-index: 999; transform: translateY(80px); opacity: 0; transition: all .3s; max-width: 320px; font-family: var(--font-mono); }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast.success { border-left: 3px solid var(--green); }
+    #toast.error { border-left: 3px solid var(--red); }
+    #toast.info { border-left: 3px solid var(--blue); }
+
+    .empty { text-align: center; padding: 40px 18px; color: var(--txt2); }
+    .empty-icon { font-size: 36px; margin-bottom: 10px; }
+    .empty-text { font-size: 13px; }
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--green); border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    .price-up { animation: flashup .4s ease; }
+    .price-down { animation: flashdown .4s ease; }
+    @keyframes flashup { 0%{background:rgba(0,224,158,.2)} 100%{background:transparent} }
+    @keyframes flashdown { 0%{background:rgba(255,71,87,.2)} 100%{background:transparent} }
+
+    .admin-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 18px; margin-bottom: 24px; }
+    .admin-stat { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+    .admin-stat-label { font-size: 11px; color: var(--txt2); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+    .admin-stat-value { font-family: var(--font-head); font-size: 28px; font-weight: 800; }
+
+    .funding-bar-wrap { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 24px; }
+    .funding-bar-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; }
+    .funding-bar-track { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .funding-bar-fill { height: 100%; background: linear-gradient(90deg, var(--green), var(--blue)); border-radius: 3px; transition: width .6s ease; }
+    .funding-bar-sub { font-size: 11px; color: var(--txt2); margin-top: 6px; }
+
+    .mb-18 { margin-bottom: 18px; }
+    .mt-18 { margin-top: 18px; }
+    .flex { display: flex; }
+    .gap-10 { gap: 10px; }
+    .align-center { align-items: center; }
+
+    @media (max-width: 1000px) {
+      .grid-4 { grid-template-columns: 1fr 1fr; }
+      .grid-main { grid-template-columns: 1fr; }
+      .grid-3 { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 640px) {
+      .land-nav { padding: 14px 20px; }
+      .hero { padding: 80px 20px 60px; }
+      .stats-row { gap: 30px; padding: 20px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .hero-ctas { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="landing-screen">
+  <div class="landing-bg"></div>
+
+  <nav class="land-nav">
+    <div class="land-logo">
+      <div class="logo-icon">T</div>
+      <span>TradeFlow</span>
+    </div>
+    <div class="land-nav-links">
+      <a href="#features">Features</a>
+      <a href="#" data-action="open-privacy">Privacy</a>
+      <a href="#" data-action="open-disclaimer">Disclaimer</a>
+      <button class="btn-launch" data-action="show-login">Sign In</button>
+      <button class="btn-launch" style="background:transparent;color:var(--green);border:1px solid var(--green)" data-action="show-register">Get Started Free</button>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-tag"><span class="hero-dot"></span> 100% Free · No Real Money · Learn to Trade</div>
+    <h1>Trade Stocks.<br><span class="accent">Risk-Free.</span></h1>
+    <p class="hero-sub">TradeFlow gives you $100,000 in virtual cash to practise real trading strategies — live market data, professional tools, zero risk.</p>
+    <div class="hero-ctas">
+      <button class="btn-cta-primary" data-action="show-register">Start Trading Free →</button>
+      <button class="btn-cta-secondary" data-action="show-login">I have an account</button>
+    </div>
+  </section>
+
+  <div class="disclaimer-banner" style="max-width:1000px;margin:0 auto 60px;">
+    <span class="disc-icon">⚠️</span>
+    <span><strong>Simulation Only:</strong> TradeFlow is a stock market simulator for educational purposes. No real money is involved. Past simulated performance does not reflect real-world investment results. This is not financial advice.</span>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-item"><div class="stat-value">$100K</div><div class="stat-label">Starting Virtual Cash</div></div>
+    <div class="stat-item"><div class="stat-value">Live</div><div class="stat-label">Real Market Data</div></div>
+    <div class="stat-item"><div class="stat-value">0%</div><div class="stat-label">Real Risk</div></div>
+    <div class="stat-item"><div class="stat-value">Free</div><div class="stat-label">Forever</div></div>
+  </div>
+
+  <div class="mockup-section">
+    <div class="mockup-label">Live Platform Preview</div>
+    <div class="mockup-frame">
+      <div class="mockup-topbar">
+        <div class="mockup-dot" style="background:#ff4757"></div>
+        <div class="mockup-dot" style="background:#f5a623"></div>
+        <div class="mockup-dot" style="background:#00e09e"></div>
+        <div class="mockup-url">tradeflow.onrender.com</div>
+      </div>
+      <div class="mockup-inner">
+        <div class="mock-kpi"><div class="mock-kpi-label">Portfolio Value</div><div class="mock-kpi-value" style="color:var(--green)">$108,420</div></div>
+        <div class="mock-kpi"><div class="mock-kpi-label">Cash Balance</div><div class="mock-kpi-value">$32,150</div></div>
+        <div class="mock-kpi"><div class="mock-kpi-label">Total P&amp;L</div><div class="mock-kpi-value" style="color:var(--green)">+$8,420</div></div>
+        <div class="mock-kpi"><div class="mock-kpi-label">Positions</div><div class="mock-kpi-value">7</div></div>
+        <div class="mock-chart" id="landing-mock-chart"></div>
+      </div>
+    </div>
+  </div>
+
+  <section class="features-section" id="features">
+    <div class="section-heading">Everything you need to learn trading</div>
+    <p class="section-sub">Professional-grade tools in a zero-risk environment</p>
+    <div class="features-grid">
+      <div class="feature-card"><div class="feature-icon">📈</div><div class="feature-title">Live Market Data</div><div class="feature-desc">Real-time prices from Yahoo Finance. Watch your portfolio move with the actual market, second by second.</div></div>
+      <div class="feature-card"><div class="feature-icon">💼</div><div class="feature-title">Portfolio Management</div><div class="feature-desc">Track all your positions, see your P&L, allocation charts, and performance history in one place.</div></div>
+      <div class="feature-card"><div class="feature-icon">⚡</div><div class="feature-title">Instant Execution</div><div class="feature-desc">Market and limit orders execute instantly. Buy, sell, and manage positions just like a real broker.</div></div>
+      <div class="feature-card"><div class="feature-icon">🏆</div><div class="feature-title">Competitions</div><div class="feature-desc">Compete against other traders in weekly and monthly contests. Earn TradeCoins and climb the leaderboard.</div></div>
+      <div class="feature-card"><div class="feature-icon">📰</div><div class="feature-title">Market News</div><div class="feature-desc">Stay informed with live financial news for every stock you follow. Make decisions like a real trader.</div></div>
+      <div class="feature-card"><div class="feature-icon">🔒</div><div class="feature-title">Secure & Private</div><div class="feature-desc">Your data is encrypted and never sold. hCaptcha protection on all forms. Full privacy compliance.</div></div>
+    </div>
+  </section>
+
+  <footer class="land-footer">
+    <div>© 2025 TradeFlow · For educational use only · Not financial advice</div>
+    <div class="footer-links">
+      <a data-action="open-privacy">Privacy Policy</a>
+      <a data-action="open-disclaimer">Disclaimer</a>
+      <a data-action="show-register">Get Started</a>
+    </div>
+  </footer>
+</div>
+
+<div id="auth-screen" style="display:none;min-height:100vh;align-items:center;justify-content:center;background:radial-gradient(ellipse at 20% 60%,rgba(59,130,246,.06) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(0,224,158,.05) 0%,transparent 50%),var(--bg)">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div class="logo-icon">T</div>
+      <span>TradeFlow</span>
+    </div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" data-action="tab-login">Sign In</div>
+      <div class="auth-tab" data-action="tab-register">Create Account</div>
+    </div>
+
+    <div id="login-form">
+      <div class="form-group"><label>Username</label><input type="text" id="login-username" placeholder="Enter your username" /></div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doLogin()" />
+      </div>
+      <div class="forgot-link"><a data-action="open-forgot">Forgot password?</a></div>
+      <div class="hcaptcha-wrap">
+        <div class="h-captcha" data-sitekey="10000000-ffff-ffff-ffff-000000000001" data-theme="dark" id="login-captcha"></div>
+      </div>
+      <button class="btn-primary" data-action="do-login">Sign In</button>
+      <div class="auth-error" id="login-error"></div>
+      <div class="auth-disclaimer">By signing in you agree to our <a data-action="open-privacy">Privacy Policy</a> and acknowledge this is a <a data-action="open-disclaimer">simulation only</a>.</div>
+    </div>
+
+    <div id="register-form" style="display:none">
+      <div class="form-group"><label>Username</label><input type="text" id="reg-username" placeholder="Choose a username" /></div>
+      <div class="form-group"><label>Email</label><input type="email" id="reg-email" placeholder="Your email address" /></div>
+      <div class="form-group"><label>Full Name</label><input type="text" id="reg-name" placeholder="Your full name" /></div>
+      <div class="form-group"><label>Password</label><input type="password" id="reg-password" placeholder="Create a password (min 8 chars)" /></div>
+      <div class="hcaptcha-wrap">
+        <div class="h-captcha" data-sitekey="10000000-ffff-ffff-ffff-000000000001" data-theme="dark" id="reg-captcha"></div>
+      </div>
+      <button class="btn-primary" data-action="do-register">Create Account</button>
+      <div class="auth-error" id="reg-error"></div>
+      <div class="auth-disclaimer">By creating an account you agree to our <a data-action="open-privacy">Privacy Policy</a>. This is a <a data-action="open-disclaimer">simulation — no real money</a>.</div>
+    </div>
+
+    <div style="text-align:center;margin-top:16px">
+      <a data-action="show-landing" style="font-size:12px;color:var(--txt3);cursor:pointer;text-decoration:none;">← Back to home</a>
+    </div>
+  </div>
+</div>
+
+<div id="app-screen">
+  <div class="shell">
+
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon">T</div>
+        <span>TradeFlow</span>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">Overview</div>
+        <div class="nav-item active" data-action="nav-dashboard"><span class="nav-icon">📊</span> Dashboard</div>
+        <div class="nav-item" data-action="nav-markets"><span class="nav-icon">🌐</span> Markets</div>
+        <div class="nav-section-label">My Account</div>
+        <div class="nav-item" data-action="nav-portfolio"><span class="nav-icon">💼</span> Portfolio</div>
+        <div class="nav-item" data-action="nav-trade"><span class="nav-icon">⚡</span> Trade</div>
+        <div class="nav-item" data-action="nav-history"><span class="nav-icon">📋</span> History</div>
+        <div class="nav-section-label">Compete</div>
+        <div class="nav-item" data-action="nav-competitions"><span class="nav-icon">🏆</span> Competitions</div>
+        <div id="admin-nav-item" style="display:none" class="nav-item" data-action="nav-admin"><span class="nav-icon">⚙️</span> Admin</div>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-pill">
+          <div class="user-avatar" id="user-avatar">U</div>
+          <div>
+            <div class="user-name" id="user-name">—</div>
+            <div class="user-coins">🪙 <span id="user-coins-display">0</span> TC</div>
+          </div>
+          <button class="logout-btn" data-action="do-logout" title="Sign out">⏻</button>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div class="topbar-title" id="page-title">Dashboard</div>
+        <div class="topbar-badge"><span class="dot"></span><span id="portfolio-balance-top">$0.00</span></div>
+        <div class="coins-badge">🪙 <span id="coins-top">0</span> TradeCoins</div>
+      </div>
+
+      <div class="page-content">
+
+        <div id="page-dashboard">
+          <div class="grid-4 mb-18">
+            <div class="card kpi"><div class="kpi-label">Portfolio Value</div><div class="kpi-value" id="dash-total">$—</div><div class="kpi-sub" id="dash-pl-pct">—</div></div>
+            <div class="card kpi"><div class="kpi-label">Cash Balance</div><div class="kpi-value" id="dash-cash">$—</div><div class="kpi-sub neu">Available to trade</div></div>
+            <div class="card kpi"><div class="kpi-label">Invested</div><div class="kpi-value" id="dash-invested">$—</div><div class="kpi-sub neu" id="dash-positions">— positions</div></div>
+            <div class="card kpi"><div class="kpi-label">Total P&amp;L</div><div class="kpi-value" id="dash-pl">$—</div><div class="kpi-sub" id="dash-pl-label">—</div></div>
+          </div>
+
+          <div style="background:var(--gold-dim);border:1px solid rgba(245,166,35,.2);border-radius:var(--radius);padding:10px 16px;font-size:12px;color:var(--gold);margin-bottom:18px;display:flex;align-items:center;gap:8px">
+            ⚠️ <span><strong>Simulation:</strong> All trades use virtual money. No real funds are involved. This platform is for educational purposes only.</span>
+          </div>
+
+          <div class="grid-main">
+            <div>
+              <div class="card mb-18">
+                <div class="card-header"><span class="card-title">Portfolio Performance</span></div>
+                <div class="card-body"><div class="chart-wrap"><canvas id="portfolio-chart"></canvas></div></div>
+              </div>
+              <div class="card mb-18">
+                <div class="card-header"><span class="card-title">Market News</span></div>
+                <div id="news-feed-body"><div class="empty"><div class="spinner"></div></div></div>
+              </div>
+              <div class="card">
+                <div class="card-header"><span class="card-title">Recent Trades</span></div>
+                <div id="recent-trades-body"><div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No trades yet</div></div></div>
+              </div>
+            </div>
+            <div>
+              <div class="card">
+                <div class="card-header" style="padding-bottom:10px"><span class="card-title">Watchlist</span></div>
+                <div id="watchlist-items"><div class="empty"><div class="spinner"></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="page-markets" style="display:none">
+          <div class="search-bar">
+            <span style="color:var(--txt3)">🔍</span>
+            <input type="text" id="market-search" placeholder="Search stocks… (e.g. AAPL, TSLA)" onkeydown="if(event.key==='Enter')searchMarket()" />
+            <button class="btn-trade buy" style="width:auto;padding:7px 16px;border-radius:7px;font-size:12px" data-action="search-market">Search</button>
+          </div>
+          <div id="quote-view" style="display:none" class="card mb-18">
+            <div class="quote-header">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between">
+                <div>
+                  <div class="quote-sym" id="q-symbol">—</div>
+                  <div class="quote-name" id="q-name">—</div>
+                  <div class="quote-price" id="q-price">$—</div>
+                  <div class="quote-change" id="q-change">—</div>
+                </div>
+                <button class="btn-join" data-action="quick-trade" style="margin-top:6px">Trade →</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="chart-tabs">
+                <button class="chart-tab active" data-action="chart-1d">1D</button>
+                <button class="chart-tab" data-action="chart-5d">5D</button>
+                <button class="chart-tab" data-action="chart-1mo">1M</button>
+                <button class="chart-tab" data-action="chart-3mo">3M</button>
+                <button class="chart-tab" data-action="chart-1y">1Y</button>
+              </div>
+              <div class="chart-wrap"><canvas id="price-chart"></canvas></div>
+            </div>
+            <div style="padding:0 18px 18px">
+              <div style="font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px">Latest News</div>
+              <div id="symbol-news"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Popular Stocks</span></div>
+            <div id="popular-list"><div class="empty"><div class="spinner"></div></div></div>
+          </div>
+        </div>
+
+        <div id="page-portfolio" style="display:none">
+          <div class="grid-main mb-18">
+            <div class="card">
+              <div class="card-header"><span class="card-title">Holdings</span></div>
+              <div id="holdings-table-wrap"><div class="empty"><div class="spinner"></div></div></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><span class="card-title">Allocation</span></div>
+              <div class="card-body">
+                <div class="ring-wrap">
+                  <div class="ring-chart-box"><canvas id="alloc-chart"></canvas></div>
+                  <div class="ring-legend" id="alloc-legend"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="page-trade" style="display:none">
+          <div style="display:grid;grid-template-columns:1fr 360px;gap:18px;align-items:start">
+
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <div class="card" style="padding:14px 18px">
+                <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
+                  <input type="text" id="trade-symbol" placeholder="Ticker — e.g. AAPL, TSLA, NVDA"
+                    style="flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--txt);padding:11px 14px;border-radius:9px;font-size:14px;font-weight:600;font-family:var(--font-mono);outline:none;text-transform:uppercase;letter-spacing:.5px"
+                    onkeydown="if(event.key==='Enter')lookupTradeSymbol()" oninput="this.value=this.value.toUpperCase()" />
+                  <button data-action="lookup-symbol" style="padding:11px 22px;background:var(--blue);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-mono);white-space:nowrap">Look Up →</button>
+                </div>
+                <div id="trade-quick-picks" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+              </div>
+
+              <div class="card" id="trade-quote-card" style="display:none">
+                <div style="padding:18px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-end">
+                  <div>
+                    <div style="display:flex;align-items:center;gap:9px">
+                      <div style="font-family:var(--font-head);font-size:20px;font-weight:800;letter-spacing:-1px" id="tq-sym">—</div>
+                      <div id="tq-exchange" style="font-size:10px;color:var(--txt2);background:var(--bg2);padding:2px 7px;border-radius:4px;font-weight:600"></div>
+                    </div>
+                    <div style="font-size:12px;color:var(--txt2);margin-top:2px" id="tq-name">—</div>
+                    <div style="display:flex;align-items:baseline;gap:9px;margin-top:8px">
+                      <div style="font-family:var(--font-head);font-size:30px;font-weight:800;letter-spacing:-1.5px" id="tq-price">$—</div>
+                      <div style="font-size:13px;font-weight:600" id="tq-change">—</div>
+                    </div>
+                  </div>
+                  <div style="text-align:right">
+                    <div style="font-size:10px;color:var(--txt2);margin-bottom:3px">Volume</div>
+                    <div style="font-size:13px;font-weight:600" id="tq-vol">—</div>
+                    <div style="font-size:10px;color:var(--txt2);margin-top:7px;margin-bottom:3px">Mkt Cap</div>
+                    <div style="font-size:13px;font-weight:600" id="tq-mktcap">—</div>
+                  </div>
+                </div>
+                <div style="padding:14px 18px 18px">
+                  <div style="display:flex;gap:3px;margin-bottom:10px" id="trade-chart-tabs">
+                    <button class="chart-tab active" data-action="tchart-1d">1D</button>
+                    <button class="chart-tab" data-action="tchart-5d">5D</button>
+                    <button class="chart-tab" data-action="tchart-1mo">1M</button>
+                    <button class="chart-tab" data-action="tchart-3mo">3M</button>
+                    <button class="chart-tab" data-action="tchart-1y">1Y</button>
+                  </div>
+                  <div style="position:relative;height:220px"><canvas id="trade-mini-chart"></canvas></div>
+                  <div style="font-size:10px;color:var(--txt3);margin-top:6px;text-align:right" id="trade-last-updated">—</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:14px">
+
+              <div class="card" style="padding:18px">
+                <div style="font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Account</div>
+                <div style="display:flex;flex-direction:column;gap:10px">
+                  <div style="display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--txt2)">Cash</span><span style="font-size:15px;font-weight:700" id="acct-cash">$—</span></div>
+                  <div style="display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--txt2)">Invested</span><span style="font-size:15px;font-weight:700" id="acct-invested">$—</span></div>
+                  <div style="height:1px;background:var(--border)"></div>
+                  <div style="display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--txt2)">Total</span><span style="font-family:var(--font-head);font-size:17px;font-weight:800" id="acct-total">$—</span></div>
+                  <div style="display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--txt2)">All-Time P&amp;L</span><span style="font-size:13px;font-weight:700" id="acct-pl">—</span></div>
+                </div>
+              </div>
+
+              <div class="card" id="trade-order-card" style="display:none;padding:18px">
+                <div style="display:flex;background:var(--bg2);border-radius:9px;padding:3px;margin-bottom:16px">
+                  <button class="trade-btn buy active" id="tab-buy" data-action="trade-buy" style="flex:1;padding:10px;font-size:13px;font-weight:700;border-radius:7px">▲ Buy</button>
+                  <button class="trade-btn sell" id="tab-sell" data-action="trade-sell" style="flex:1;padding:10px;font-size:13px;font-weight:700;border-radius:7px">▼ Sell</button>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                  <label style="font-size:10px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px">Amount</label>
+                  <div style="display:flex;gap:3px;background:var(--bg2);padding:2px;border-radius:5px">
+                    <button id="mode-shares" data-action="mode-shares-btn" style="padding:3px 10px;border:none;background:var(--card2);color:var(--txt);border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font-mono)">Shares</button>
+                    <button id="mode-dollars" data-action="mode-dollars-btn" style="padding:3px 10px;border:none;background:none;color:var(--txt2);border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font-mono)">$ Dollars</button>
+                  </div>
+                </div>
+                <div style="position:relative;margin-bottom:10px">
+                  <span id="amt-prefix" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--txt2);font-size:15px;display:none">$</span>
+                  <input type="number" id="trade-qty" placeholder="0" min="0" step="any" oninput="updateOrderSummary()"
+                    style="width:100%;background:var(--bg2);border:2px solid var(--border);color:var(--txt);padding:12px 14px;border-radius:9px;font-size:18px;font-weight:700;font-family:var(--font-mono);outline:none;transition:border-color .2s" />
+                </div>
+                <div style="display:flex;gap:5px;margin-bottom:14px">
+                  <button data-action="fill-25" class="qfill-btn">25%</button>
+                  <button data-action="fill-50" class="qfill-btn">50%</button>
+                  <button data-action="fill-75" class="qfill-btn">75%</button>
+                  <button data-action="fill-100" class="qfill-btn">Max</button>
+                </div>
+                <div style="display:flex;gap:7px;margin-bottom:14px">
+                  <div style="flex:1">
+                    <label style="display:block;font-size:10px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px">Order Type</label>
+                    <select id="trade-order-type" onchange="toggleLimitPrice()" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--txt);padding:9px 11px;border-radius:7px;font-size:12px;font-family:var(--font-mono);outline:none">
+                      <option value="market">Market</option>
+                      <option value="limit">Limit</option>
+                    </select>
+                  </div>
+                  <div id="limit-price-group" style="flex:1;display:none">
+                    <label style="display:block;font-size:10px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px">Limit Price</label>
+                    <input type="number" id="limit-price" placeholder="0.00" step="0.01" oninput="updateOrderSummary()" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--txt);padding:9px 11px;border-radius:7px;font-size:12px;font-family:var(--font-mono);outline:none" />
+                  </div>
+                </div>
+                <div style="background:var(--bg2);border-radius:9px;padding:12px 14px;margin-bottom:13px">
+                  <div class="order-row"><span style="color:var(--txt2)">Price</span><span id="os-price" style="font-weight:600">—</span></div>
+                  <div class="order-row"><span style="color:var(--txt2)">Shares</span><span id="os-shares">—</span></div>
+                  <div class="order-row"><span style="color:var(--txt2)">Subtotal</span><span id="os-subtotal">—</span></div>
+                  <div class="order-row"><span style="color:var(--txt2)">Commission (0.1%)</span><span id="os-comm">—</span></div>
+                  <div class="order-row"><span style="font-weight:700;font-size:13px" id="os-total-label">Total Cost</span><span id="os-total" style="font-weight:700;font-size:14px">—</span></div>
+                </div>
+                <div style="margin-bottom:13px">
+                  <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px">
+                    <span style="color:var(--txt2)">Buying Power</span><span id="bp-amount" style="font-weight:600">—</span>
+                  </div>
+                  <div style="height:4px;background:var(--border);border-radius:2px">
+                    <div id="bp-bar" style="height:100%;background:var(--green);border-radius:2px;transition:width .3s;width:0%"></div>
+                  </div>
+                  <div style="font-size:10px;color:var(--txt2);margin-top:3px" id="bp-after">After: —</div>
+                </div>
+                <button class="btn-trade buy" id="submit-trade" data-action="submit-trade-btn" style="font-size:14px;padding:14px;letter-spacing:.2px">Place Buy Order</button>
+                <div style="text-align:center;margin-top:10px;font-size:10px;color:var(--txt3)">⚠️ Virtual money only · No real funds</div>
+              </div>
+
+              <div class="card">
+                <div style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)">
+                  <span style="font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px">Positions</span>
+                  <span style="font-size:10px;color:var(--txt3)">Click to sell</span>
+                </div>
+                <div id="trade-holdings"><div class="empty"><div class="spinner"></div></div></div>
+              </div>
+
+              <div class="card" style="padding:16px 18px;background:var(--blue-dim);border-color:rgba(59,130,246,.2)">
+                <div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:7px">💡 Trading Tips</div>
+                <ul style="font-size:11px;color:var(--txt2);line-height:1.9;padding-left:13px">
+                  <li>Max 25% of portfolio per trade</li>
+                  <li>0.1% commission on all orders</li>
+                  <li>Prices refresh every 2–3 seconds</li>
+                  <li>Use Markets to research first</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="page-history" style="display:none">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Trade History</span></div>
+            <div id="history-table-wrap"><div class="empty"><div class="spinner"></div></div></div>
+          </div>
+        </div>
+
+        <div id="page-competitions" style="display:none">
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div style="font-family:var(--font-head);font-size:15px;font-weight:700">🪙 Your TradeCoins</div>
+              <div style="font-size:12px;color:var(--txt2);margin-top:3px">Watch ads to earn TC · Max 20 min/day · 10 TC per ad</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px">
+              <div style="font-family:var(--font-head);font-size:28px;font-weight:800;color:var(--gold)">🪙 <span id="comp-coins">0</span></div>
+              <button class="btn-primary" data-action="watch-ad" style="width:auto;padding:10px 20px;white-space:nowrap">▶ Watch Ad +10 TC</button>
+            </div>
+          </div>
+          <!-- FLOW MARKET -->
+          <div class="grid-main">
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <div class="card" style="padding:20px">
+                <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px">
+                  <div>
+                    <div style="font-family:var(--font-head);font-size:22px;font-weight:800">FlowCoin <span style="color:var(--txt2);font-size:14px">FLOW</span></div>
+                    <div style="font-size:13px;color:var(--txt2);margin-top:2px">TradeFlow's internal TC market · Price driven by users</div>
+                  </div>
+                  <div style="text-align:right">
+                    <div style="font-family:var(--font-head);font-size:28px;font-weight:800;color:var(--green)" id="flow-price">100.0000 TC</div>
+                  </div>
+                </div>
+                <div style="height:180px"><canvas id="flow-chart"></canvas></div>
+              </div>
+
+              <div class="card" style="padding:20px">
+                <div style="font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Trade FLOW</div>
+                <div style="display:flex;gap:10px;margin-bottom:12px">
+                  <div style="flex:1">
+                    <label style="font-size:10px;color:var(--txt2);display:block;margin-bottom:4px">AMOUNT</label>
+                    <input type="number" id="flow-amount" placeholder="0" min="0" step="any"
+                      style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--txt);padding:10px 12px;border-radius:7px;font-size:14px;font-family:var(--font-mono);outline:none" />
+                  </div>
+                </div>
+                <div style="display:flex;gap:10px">
+                  <button data-action="buy-flow" class="btn-trade buy" style="flex:1">▲ Buy FLOW (TC)</button>
+                  <button data-action="sell-flow" class="btn-trade sell" style="flex:1">▼ Sell FLOW</button>
+                </div>
+                <div style="font-size:11px;color:var(--txt3);margin-top:8px;text-align:center">Buy with TC · Sell to get TC back · Price changes with volume</div>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <div class="card" style="padding:20px">
+                <div style="font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">Your Position</div>
+                <div style="display:flex;flex-direction:column;gap:10px">
+                  <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2);font-size:12px">TC Balance</span><span style="font-weight:700;color:var(--gold)" id="flow-tc-bal">0 TC</span></div>
+                  <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2);font-size:12px">FLOW Holdings</span><span style="font-weight:700" id="flow-holdings">0 FLOW</span></div>
+                  <div style="height:1px;background:var(--border)"></div>
+                  <div style="display:flex;justify-content:space-between"><span style="color:var(--txt2);font-size:12px">FLOW Value</span><span style="font-family:var(--font-head);font-size:16px;font-weight:800;color:var(--green)" id="flow-value">0 TC</span></div>
+                </div>
+              </div>
+
+              <div class="card" style="padding:20px;background:var(--gold-dim);border-color:rgba(245,166,35,.2)">
+                <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:8px">🪙 How It Works</div>
+                <ul style="font-size:12px;color:var(--txt2);line-height:1.9;padding-left:14px">
+                  <li>Watch ads to earn TradeCoins (TC)</li>
+                  <li>Use TC to buy FLOW</li>
+                  <li>Price rises when people buy</li>
+                  <li>Price falls when people sell</li>
+                  <li>Max 20 min ads/day</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="page-admin" style="display:none">
+          <div style="background:var(--red-dim);border:1px solid rgba(255,71,87,.2);border-radius:var(--radius);padding:12px 18px;font-size:12px;color:var(--red);margin-bottom:20px">
+            🔒 Admin Access Only — This page is not visible to regular users.
+          </div>
+
+          <div class="funding-bar-wrap">
+            <div style="font-family:var(--font-head);font-size:15px;font-weight:700;margin-bottom:6px">💰 Monthly Funding Goal</div>
+            <div class="funding-bar-label">
+              <span style="color:var(--txt2)">Raised this month</span>
+              <span id="admin-funding-raised">$0 / $0</span>
+            </div>
+            <div class="funding-bar-track"><div class="funding-bar-fill" id="admin-funding-bar" style="width:0%"></div></div>
+            <div class="funding-bar-sub" id="admin-funding-sub">Set your monthly target to get started.</div>
+            <div style="display:flex;gap:10px;margin-top:12px">
+              <input type="number" id="admin-funding-target" placeholder="Monthly target ($)" style="flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--txt);padding:9px 12px;border-radius:7px;font-size:13px;font-family:var(--font-mono);outline:none" />
+              <input type="number" id="admin-funding-current" placeholder="Current raised ($)" style="flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--txt);padding:9px 12px;border-radius:7px;font-size:13px;font-family:var(--font-mono);outline:none" />
+              <button data-action="update-funding" style="padding:9px 18px;background:var(--green);color:#000;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-mono)">Update</button>
+            </div>
+          </div>
+
+          <div class="admin-grid">
+            <div class="admin-stat"><div class="admin-stat-label">Total Users</div><div class="admin-stat-value" id="admin-users">—</div></div>
+            <div class="admin-stat"><div class="admin-stat-label">Active Portfolios</div><div class="admin-stat-value" id="admin-portfolios">—</div></div>
+            <div class="admin-stat"><div class="admin-stat-label">Trades Today</div><div class="admin-stat-value" id="admin-trades-today">—</div></div>
+            <div class="admin-stat"><div class="admin-stat-label">Total Trades</div><div class="admin-stat-value" id="admin-trades-total">—</div></div>
+            <div class="admin-stat"><div class="admin-stat-label">TradeCoins Issued</div><div class="admin-stat-value" id="admin-coins">—</div></div>
+            <div class="admin-stat"><div class="admin-stat-label">Server Status</div><div class="admin-stat-value" style="color:var(--green);font-size:16px" id="admin-status">● Online</div></div>
+          </div>
+
+          <div class="card mb-18">
+            <div class="card-header"><span class="card-title">Recent Users</span></div>
+            <div id="admin-users-table"><div class="empty"><div class="spinner"></div></div></div>
+          </div>
+
+          <div class="card" style="padding:20px">
+            <div style="font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">Admin Controls</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button data-action="admin-cache" style="padding:9px 16px;background:var(--card2);border:1px solid var(--border);color:var(--txt);border-radius:7px;font-size:12px;cursor:pointer;font-family:var(--font-mono)">🔄 Clear Cache</button>
+              <button data-action="admin-export" style="padding:9px 16px;background:var(--card2);border:1px solid var(--border);color:var(--txt);border-radius:7px;font-size:12px;cursor:pointer;font-family:var(--font-mono)">📥 Export Users</button>
+              <button data-action="admin-logs" style="padding:9px 16px;background:var(--card2);border:1px solid var(--border);color:var(--txt);border-radius:7px;font-size:12px;cursor:pointer;font-family:var(--font-mono)">📋 View Logs</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<div class="modal-overlay" id="forgot-modal">
+  <div class="modal-box">
+    <div class="modal-title">Reset Password</div>
+    <div class="modal-sub">Enter your email address and we'll send you a password reset link. Make sure your email server (SMTP) is configured on the backend.</div>
+    <div class="form-group"><label>Email Address</label><input type="email" id="forgot-email" placeholder="your@email.com" /></div>
+    <div class="auth-error" id="forgot-error"></div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" data-action="close-forgot">Cancel</button>
+      <button class="btn-modal-submit" data-action="forgot-password">Send Reset Link</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="privacy-modal">
+  <div class="policy-modal-box">
+    <button class="policy-close" data-action="close-privacy">×</button>
+    <h2>🔒 Privacy Policy</h2>
+    <p><strong>Last updated: 2025</strong></p>
+    <h3>1. What We Collect</h3>
+    <p>We collect your username, email address, and hashed (encrypted) password when you register. We also store your virtual trade history and portfolio data for the purpose of running the simulation.</p>
+    <h3>2. How We Use Your Data</h3>
+    <p>Your data is used solely to operate TradeFlow. We do not sell, rent, or share your personal data with third parties for marketing purposes. Email addresses are used only for account recovery.</p>
+    <h3>3. Data Security</h3>
+    <p>All passwords are hashed using bcrypt before storage — we never store plain-text passwords. All connections are encrypted via HTTPS. hCaptcha is used to protect forms from automated abuse.</p>
+    <h3>4. Cookies & Storage</h3>
+    <p>We use localStorage to store your session token on your device. No advertising cookies are used. hCaptcha may set cookies governed by their own privacy policy.</p>
+    <h3>5. Your Rights</h3>
+    <p>You may request deletion of your account and all associated data at any time by contacting us. You have the right to access, rectify, and erase your personal data.</p>
+    <h3>6. Contact</h3>
+    <p>For privacy concerns, please contact the site administrator.</p>
+    <div style="margin-top:20px;text-align:right">
+      <button data-action="close-privacy" style="padding:10px 24px;background:var(--green);color:#000;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:var(--font-mono)">Got it</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="disclaimer-modal">
+  <div class="policy-modal-box">
+    <button class="policy-close" data-action="close-disclaimer">×</button>
+    <h2>⚠️ Important Disclaimer</h2>
+    <h3>This is a Simulation</h3>
+    <p>TradeFlow is a <strong>stock market simulator</strong> designed for educational and entertainment purposes only. All trades, portfolios, and balances use <strong>virtual money</strong> — no real currency is involved at any point.</p>
+    <h3>Not Financial Advice</h3>
+    <p>Nothing on TradeFlow constitutes financial, investment, or trading advice. The platform does not recommend buying or selling any real securities. Past simulated performance does not indicate future real-world results.</p>
+    <h3>Market Data</h3>
+    <p>Price data is sourced from Yahoo Finance and may be delayed. Data accuracy is not guaranteed. Do not make real investment decisions based on this platform.</p>
+    <h3>No Real Money</h3>
+    <p>TradeFlow does not handle, process, or hold real money. There are no real monetary prizes. Any "TradeCoins" or competition rewards are virtual and have no real-world monetary value.</p>
+    <h3>Use at Your Own Risk</h3>
+    <p>By using TradeFlow, you acknowledge this is a simulation and agree not to hold the developers liable for any decisions made based on the platform.</p>
+    <div style="margin-top:20px;text-align:right">
+      <button data-action="close-disclaimer" style="padding:10px 24px;background:var(--gold);color:#000;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:var(--font-mono)">I Understand</button>
+    </div>
+  </div>
+</div>
+
+<script src="/static/ads.js"></script>
+<script src="/static/flow_market.js"></script>
+<script src="/static/app.js"></script>
+
+<!-- AD MODAL -->
+<div class="modal-overlay" id="ad-modal">
+  <div class="modal-box" style="width:420px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="modal-title">🪙 Earn TradeCoins</div>
+      <span style="font-size:18px;font-weight:700;color:var(--txt2)" id="ad-timer"></span>
+    </div>
+    <div id="ad-message" style="min-height:160px"></div>
+    <div style="height:6px;background:var(--border);border-radius:3px;margin:14px 0">
+      <div id="ad-progress-bar" style="height:100%;background:linear-gradient(90deg,var(--green),var(--blue));border-radius:3px;width:0%"></div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button id="ad-close-btn" class="btn-modal-cancel" style="display:none" data-action="close-ad">Close</button>
+      <button id="ad-claim-btn" class="btn-modal-submit" style="display:none">Claim +10 TC 🪙</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
