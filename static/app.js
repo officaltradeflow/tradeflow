@@ -1,8 +1,3 @@
-document.addEventListener('click', e => {
-  const el = e.target.closest('[data-oc]');
-  if (el) { try { new Function(el.getAttribute('data-oc')).call(el); } catch(err){ console.error(err); } }
-});
-
 // ════════════════════════════════════════
 //  STATE
 // ════════════════════════════════════════
@@ -345,7 +340,7 @@ async function loadWatchlist() {
   $('watchlist-items').innerHTML = results.map((r,i) => {
     if (r.status !== 'fulfilled') return '';
     const d = r.value; const up = d.change >= 0;
-    return `<div class="watch-item" data-oc="navigate('markets');setTimeout(()=>loadQuote('${WATCH_SYMS[i]}'),100)">
+    return `<div class="watch-item" data-sym="${WATCH_SYMS[i]}" style="cursor:pointer">
       <div><div class="watch-sym">${d.symbol}</div><div class="watch-name">${d.name||d.symbol}</div></div>
       <div style="text-align:right"><div class="watch-price">${fmt(d.price)}</div><div class="watch-chg ${up?'up':'down'}">${fmtPct(d.change_percent)}</div></div>
     </div>`;
@@ -437,7 +432,7 @@ async function loadPopular() {
     results.map((r,i)=>{
       if(r.status!=='fulfilled') return '';
       const d=r.value; const up=d.change>=0;
-      return `<tr><td><div class="sym-cell">${d.symbol}</div><div class="sym-name">${d.name||''}</div></td><td>${fmt(d.price)}</td><td class="${up?'up':'down'}">${d.change>=0?'+':''}${fmt(d.change)}</td><td class="${up?'up':'down'}">${fmtPct(d.change_percent)}</td><td style="color:var(--txt2)">${d.volume?d.volume.toLocaleString():'—'}</td><td><button class="btn-join" data-oc="loadQuote('${d.symbol}')" style="padding:5px 12px;font-size:11px">View</button></td></tr>`;
+      return `<tr><td><div class="sym-cell">${d.symbol}</div><div class="sym-name">${d.name||''}</div></td><td>${fmt(d.price)}</td><td class="${up?'up':'down'}">${d.change>=0?'+':''}${fmt(d.change)}</td><td class="${up?'up':'down'}">${fmtPct(d.change_percent)}</td><td style="color:var(--txt2)">${d.volume?d.volume.toLocaleString():'—'}</td><td><button class="btn-join" data-sym="${d.symbol}" style="padding:5px 12px;font-size:11px">View</button></td></tr>`;
     }).join('')
   }</tbody></table>`;
 }
@@ -514,7 +509,7 @@ function renderTradeQuickPicks(active) {
   const wrap = $('trade-quick-picks');
   wrap.innerHTML = TRADE_PICKS.map(s => {
     const isActive = s === active;
-    return `<button data-oc="$('trade-symbol').value='${s}';lookupTradeSymbol()"
+    return `<button data-pick="${s}"
       style="padding:3px 10px;border:1px solid ${isActive?'var(--blue)':'var(--border)'};background:${isActive?'var(--blue-dim)':'var(--bg2)'};color:${isActive?'var(--blue)':'var(--txt2)'};border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font-mono)">${s}</button>`;
   }).join('');
 }
@@ -656,7 +651,7 @@ async function loadTradeHoldings() {
     $('trade-holdings').innerHTML = holdings.map(h => {
       const up = h.profit_loss>=0;
       return `<div style="padding:11px 18px;border-bottom:1px solid rgba(30,42,61,.5);cursor:pointer;transition:background .15s"
-        data-oc="quickSellPosition('${h.symbol}',${h.quantity})">
+        data-sell="${h.symbol}" data-qty="${h.quantity}" style="cursor:pointer">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div><div style="font-weight:700;font-size:13px">${h.symbol}</div><div style="font-size:10px;color:var(--txt2);margin-top:1px">${h.quantity} sh · avg ${fmt(h.average_cost)}</div></div>
           <div style="text-align:right"><div style="font-weight:600;font-size:13px">${fmt(h.total_value)}</div><div style="font-size:11px;font-weight:600;color:${up?'var(--green)':'var(--red)'}">${fmtPct(h.profit_loss_percent)}</div></div>
@@ -762,4 +757,73 @@ window.addEventListener('DOMContentLoaded', () => {
       if (target) { e.preventDefault(); target.scrollIntoView({behavior:'smooth'}); }
     });
   });
+});
+
+// ════════════════════════════════════════
+//  EVENT DISPATCH (replaces data-oc / new Function)
+// ════════════════════════════════════════
+const _actions = {
+  'do-login':         () => doLogin(),
+  'do-register':      () => doRegister(),
+  'do-logout':        () => doLogout(),
+  'forgot-password':  () => doForgotPassword(),
+  'show-login':       () => showAuth('login'),
+  'show-register':    () => showAuth('register'),
+  'show-landing':     () => showLanding(),
+  'tab-login':        () => switchTab('login'),
+  'tab-register':     () => switchTab('register'),
+  'open-privacy':     () => openModal('privacy-modal'),
+  'open-disclaimer':  () => openModal('disclaimer-modal'),
+  'open-forgot':      () => openModal('forgot-modal'),
+  'close-privacy':    () => closeModal('privacy-modal'),
+  'close-disclaimer': () => closeModal('disclaimer-modal'),
+  'close-forgot':     () => closeModal('forgot-modal'),
+  'nav-dashboard':    () => navigate('dashboard'),
+  'nav-markets':      () => navigate('markets'),
+  'nav-portfolio':    () => navigate('portfolio'),
+  'nav-trade':        () => navigate('trade'),
+  'nav-history':      () => navigate('history'),
+  'nav-competitions': () => navigate('competitions'),
+  'nav-admin':        () => navigate('admin'),
+  'search-market':    () => searchMarket(),
+  'quick-trade':      () => quickTrade(),
+  'chart-1d':         (el) => loadChart('1d','1m',el),
+  'chart-5d':         (el) => loadChart('5d','5m',el),
+  'chart-1mo':        (el) => loadChart('1mo','1d',el),
+  'chart-3mo':        (el) => loadChart('3mo','1d',el),
+  'chart-1y':         (el) => loadChart('1y','1wk',el),
+  'tchart-1d':        (el) => loadTradeChart('1d','1m',el),
+  'tchart-5d':        (el) => loadTradeChart('5d','5m',el),
+  'tchart-1mo':       (el) => loadTradeChart('1mo','1d',el),
+  'tchart-3mo':       (el) => loadTradeChart('3mo','1d',el),
+  'tchart-1y':        (el) => loadTradeChart('1y','1wk',el),
+  'lookup-symbol':    () => lookupTradeSymbol(),
+  'trade-buy':        () => setTradeType('buy'),
+  'trade-sell':       () => setTradeType('sell'),
+  'mode-shares-btn':  () => setAmountMode('shares'),
+  'mode-dollars-btn': () => setAmountMode('dollars'),
+  'fill-25':          () => quickFill(25),
+  'fill-50':          () => quickFill(50),
+  'fill-75':          () => quickFill(75),
+  'fill-100':         () => quickFill(100),
+  'submit-trade-btn': () => submitTrade(),
+  'update-funding':   () => updateFunding(),
+  'admin-cache':      () => adminAction('reset_cache'),
+  'admin-export':     () => adminAction('export_users'),
+  'admin-logs':       () => adminAction('view_logs'),
+};
+
+document.addEventListener('click', e => {
+  // Static actions
+  const el = e.target.closest('[data-action]');
+  if (el) { const fn = _actions[el.dataset.action]; if (fn) { e.preventDefault(); fn(el); } return; }
+  // Dynamic: watchlist / popular view
+  const sym = e.target.closest('[data-sym]');
+  if (sym) { navigate('markets'); setTimeout(() => loadQuote(sym.dataset.sym), 100); return; }
+  // Dynamic: quick picks
+  const pick = e.target.closest('[data-pick]');
+  if (pick) { $('trade-symbol').value = pick.dataset.pick; lookupTradeSymbol(); return; }
+  // Dynamic: sell position
+  const sell = e.target.closest('[data-sell]');
+  if (sell) { quickSellPosition(sell.dataset.sell, parseFloat(sell.dataset.qty)); }
 });
