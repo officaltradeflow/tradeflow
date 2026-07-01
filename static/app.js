@@ -811,6 +811,8 @@ const _actions = {
   'admin-cache':      () => adminAction('reset_cache'),
   'admin-export':     () => adminAction('export_users'),
   'admin-logs':       () => adminAction('view_logs'),
+  'close-ad':         () => closeAdModal(),
+  'watch-ad':         () => showAd(),
 };
 
 document.addEventListener('click', e => {
