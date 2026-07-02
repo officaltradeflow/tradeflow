@@ -1,128 +1,51 @@
-# TradeFlow v2.0.0 — Deployment Guide
+# TradeFlow v2.0.0
 
-## What's New in v2.0.0
-- ✅ Landing / marketing page (before login)
-- ✅ hCaptcha on login & register forms
-- ✅ Forgot password endpoint (needs SMTP config)
-- ✅ Encrypted passwords (bcrypt)
-- ✅ Privacy Policy & Disclaimer modals
-- ✅ Simulation disclaimer banner throughout
-- ✅ Buy/sell form side-by-side with chart on Trade page
-- ✅ Live price refresh every 2–3 seconds on Trade page
-- ✅ Market news feed (Yahoo Finance fallback, NewsAPI optional)
-- ✅ "Still In Development" tape over Competitions page
-- ✅ TradeCoins currency framework (ready for ad integration)
-- ✅ Admin page (username: admin, password: set below)
-- ✅ Funding progress bar (admin-controlled)
-- ✅ SPA catch-all route for client-side navigation
+Stock trading simulator — real market data, virtual money.
 
----
+**Live:** https://tradeflow-hjqr.onrender.com
 
-## 1. Upload Files
+## Stack
+- **Backend:** FastAPI + SQLAlchemy
+- **Database:** Supabase (PostgreSQL)
+- **Hosting:** Render.com (free tier)
+- **Frontend:** Vanilla JS + Chart.js
 
-Upload everything to: `/home/Stocksimulater/trading_simulator/`
+## Setup
 
-Structure:
-```
-trading_simulator/
-├── app/
-│   ├── main.py
-│   ├── core/config.py
-│   ├── api/routes/  (auth, trading, portfolio, competitions, market_data, admin)
-│   ├── database/    (database.py, models.py)
-│   ├── services/    (data_service.py)
-│   └── websocket/   (connection_manager.py)
-├── static/
-│   └── index.html   ← put the frontend here
-├── passenger_wsgi.py
-└── requirements.txt
-```
-
----
-
-## 2. Virtual Environment
-
+### 1. Clone & install
 ```bash
-cd /home/Stocksimulater/trading_simulator
-python3 -m venv venv
-source venv/bin/activate
+git clone https://github.com/officaltradeflow/tradeflow
 pip install -r requirements.txt
 ```
 
----
-
-## 3. PythonAnywhere Web Tab
-
-| Setting | Value |
+### 2. Environment variables (Render)
+| Key | Value |
 |---|---|
-| WSGI file | `/home/Stocksimulater/trading_simulator/passenger_wsgi.py` |
-| Working dir | `/home/Stocksimulater/trading_simulator/` |
-| Virtualenv | `/home/Stocksimulater/trading_simulator/venv/` |
+| `DATABASE_URL` | Supabase session pooler URL |
+| `SECRET_KEY` | Random string |
+| `PYTHON_VERSION` | `3.11.0` |
+| `ADMIN_TOKEN` | Random string |
+| `BOT_PASSWORD` | Bot account password |
 
-Static files mapping:
-| URL | Directory |
-|---|---|
-| `/static/` | `/home/Stocksimulater/trading_simulator/static/` |
-
----
-
-## 4. Environment Variables (Web Tab → Environment Variables)
-
-| Variable | Value | Required |
-|---|---|---|
-| `SECRET_KEY` | Long random string | ✅ Yes |
-| `NEWS_API_KEY` | From newsapi.org (free tier) | Optional |
-| `ALPHA_VANTAGE_API_KEY` | From alphavantage.co | Optional |
-
-Generate a secret key:
+### 3. Start
 ```bash
-python3 -c "import secrets; print(secrets.token_hex(32))"
+uvicorn app.main:app --host 0.0.0.0 --port $PORT
 ```
 
----
+## Features
+- Live market data (Yahoo Finance)
+- Buy/sell with virtual $100k
+- AI trader bot (keeps site alive)
+- FlowCoin (FLOW) TC market
+- hCaptcha protection
+- Admin dashboard
+- Security headers (CSP, HSTS, etc.)
 
-
-## 6. hCaptcha Setup (Free)
-
-1. Go to https://www.hcaptcha.com and create a free account
-2. Add your site (use `Stocksimulater.pythonanywhere.com`)
-3. Get your **Site Key**
-4. In `static/index.html`, replace both instances of:
-   ```
-   data-sitekey="10000000-ffff-ffff-ffff-000000000001"
-   ```
-   with your actual site key. The current value is hCaptcha's test key (always passes).
-5. Add your **Secret Key** to the backend for server-side verification (optional but recommended)
-
----
-
-## 7. Forgot Password / Email Setup
-
-To enable real password reset emails:
-1. Get SMTP credentials (Gmail, SendGrid, etc.)
-2. In `app/api/routes/auth.py`, uncomment and implement the email sending code in `forgot_password()`
-3. Add these environment variables:
-   - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `FROM_EMAIL`
-
----
-
-## 8. News Feed
-
-- **Free (default):** Uses Yahoo Finance news — no API key needed
-- **Better quality:** Sign up at https://newsapi.org (free tier: 100 requests/day)
-  - Add `NEWS_API_KEY=your_key` to environment variables
-
----
-
-## 9. Reload & Test
-
-Click **Reload** in PythonAnywhere Web tab, then visit:
-- `https://Stocksimulater.pythonanywhere.com/` — landing page
-- `https://Stocksimulater.pythonanywhere.com/api/docs` — API docs
-- `https://Stocksimulater.pythonanywhere.com/health` — health check
-
----
-
+## Notes
+- Prices refresh every 2.5s on Trade page
+- AI bot trades every 1–3 min
+- hCaptcha site key: replace in `index.html`
+- Forgot password needs SMTP config in `auth.py`
 ## Notes
 - SQLite database is created automatically at first run
 - WebSocket real-time updates may be limited on PythonAnywhere free tier
