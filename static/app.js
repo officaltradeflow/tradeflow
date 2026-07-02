@@ -123,18 +123,11 @@ async function doLogin() {
   const u = $('login-username').value.trim();
   const p = $('login-password').value;
   if (!u || !p) { $('login-error').textContent = 'Please fill all fields.'; return; }
-  // Admin check
-  if (u === ADMIN_USERNAME && p === ADMIN_PASSWORD_HASH) {
-    token = ADMIN_TOKEN;
-    localStorage.setItem('tf_token', token);
-    currentUser = { username: 'Admin', id: 0, is_admin: true };
-    bootAdminApp();
-    return;
-  }
   try {
     const data = await api('/api/auth/login', {method:'POST', body: JSON.stringify({username:u, password:p})});
     token = data.access_token;
     localStorage.setItem('tf_token', token);
+    if (data.is_admin) { currentUser = { username: u, id: 0, is_admin: true }; bootAdminApp(); return; }
     await bootApp();
   } catch(e) { $('login-error').textContent = e.message; }
 }
