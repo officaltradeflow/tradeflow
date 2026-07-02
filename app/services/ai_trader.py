@@ -19,9 +19,9 @@ logger = logging.getLogger("ai_trader")
 # ── Config ────────────────────────────────────────────────────────────────────
 BASE_URL = "https://tradeflow-hjqr.onrender.com"
 
-AI_USERNAME = "tf_market_bot"
-AI_EMAIL    = "bot@tradeflow.internal"
-AI_PASSWORD = "B0t$ecure!TradeFlow99"
+AI_USERNAME = os.getenv("BOT_USERNAME", "tf_market_bot")
+AI_EMAIL    = os.getenv("BOT_EMAIL", "bot@tradeflow.internal")
+AI_PASSWORD = os.getenv("BOT_PASSWORD", "")
 AI_NAME     = "TF Market Bot"
 
 # Stocks to trade across different sectors
