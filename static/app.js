@@ -20,8 +20,6 @@ const POPULAR = ['AAPL','TSLA','MSFT','NVDA','GOOGL','AMZN','META','JPM','V','BA
 const TRADE_PICKS = ['AAPL','TSLA','NVDA','MSFT','GOOGL','AMZN','META','SPY','AMD','BTC-USD'];
 
 // Admin credentials (stored hashed — in production use backend auth)
-const ADMIN_USERNAME = 'x7k_maple_29';
-const ADMIN_PASSWORD_HASH = 'Qz#9mPx!vL42@Wd';
 const ADMIN_TOKEN = 'tf_admin_8f3k9d2m1x7q4w6e';
 
 // ── Price line plugin ────────────────────────────────────────────────────────
