@@ -6,7 +6,7 @@ Runs as a background service that:
 2. Trades stocks continuously using multiple strategies
 3. Keeps the Render free tier awake by making regular API calls
 """
-
+import os
 import asyncio
 import aiohttp
 import random
