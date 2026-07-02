@@ -1,13 +1,15 @@
+import os
+import hmac
+import hashlib
+import logging
+from datetime import datetime, timedelta
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from typing import Optional
-from datetime import datetime, timedelta
-from jose import JWTError, jwt
-import hashlib
-import hmac
-import logging
+from jose import jwt, JWTError
 
 from app.database.database import get_db
 from app.database.models import User
@@ -18,6 +20,7 @@ router = APIRouter()
 security = HTTPBearer()
 
 SALT = "tradeflow_salt_2025"
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "")
 
 
 class RegisterRequest(BaseModel):
@@ -36,6 +39,7 @@ class ForgotPasswordRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    is_admin: bool = False
 
 class UserResponse(BaseModel):
     id: int
@@ -44,14 +48,12 @@ class UserResponse(BaseModel):
     full_name: str
     is_active: bool
     created_at: datetime
-
     class Config:
         from_attributes = True
 
 
 def hash_password(password: str) -> str:
-    key = (SALT + password).encode("utf-8")
-    return hashlib.sha256(key).hexdigest()
+    return hashlib.sha256((SALT + password).encode()).hexdigest()
 
 def verify_password(plain: str, hashed: str) -> bool:
     return hmac.compare_digest(hash_password(plain), hashed)
@@ -70,12 +72,12 @@ def get_current_user(
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         user_id = payload.get("sub")
         if user_id is None:
-            raise HTTPException(status_code=401, detail="Invalid token")
+            raise HTTPException(401, "Invalid token")
     except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
+        raise HTTPException(401, "Invalid or expired token")
     user = db.query(User).filter(User.id == int(user_id)).first()
     if not user or not user.is_active:
-        raise HTTPException(status_code=401, detail="User not found or inactive")
+        raise HTTPException(401, "User not found or inactive")
     return user
 
 
@@ -95,12 +97,9 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
         hashed_password=hash_password(req.password),
         full_name=req.full_name or "",
     )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    logger.info("New user registered: %s", req.username)
+    db.add(user); db.commit(); db.refresh(user)
+    logger.info("New user: %s", req.username)
     return user
-
 
 @router.post("/login", response_model=TokenResponse)
 def login(req: LoginRequest, db: Session = Depends(get_db)):
@@ -110,17 +109,15 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
     if not user.is_active:
         raise HTTPException(403, "Account is disabled")
     token = create_access_token({"sub": str(user.id)})
-    return {"access_token": token}
-
+    return {"access_token": token, "is_admin": req.username == ADMIN_USERNAME}
 
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user)):
     return current_user
 
-
 @router.post("/forgot-password")
 def forgot_password(req: ForgotPasswordRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == req.email).first()
     if user:
-        logger.info("Password reset requested for: %s", req.email)
+        logger.info("Password reset requested: %s", req.email)
     return {"message": "If an account with that email exists, a reset link has been sent."}
