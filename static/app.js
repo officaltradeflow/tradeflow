@@ -20,6 +20,8 @@ const POPULAR = ['AAPL','TSLA','MSFT','NVDA','GOOGL','AMZN','META','JPM','V','BA
 const TRADE_PICKS = ['AAPL','TSLA','NVDA','MSFT','GOOGL','AMZN','META','SPY','AMD','BTC-USD'];
 
 // Admin credentials (stored hashed — in production use backend auth)
+const ADMIN_USERNAME = 'x7k_maple_29';
+const ADMIN_PASSWORD_HASH = 'Qz#9mPx!vL42@Wd';
 const ADMIN_TOKEN = 'tf_admin_8f3k9d2m1x7q4w6e';
 
 // ── Price line plugin ────────────────────────────────────────────────────────
@@ -123,11 +125,18 @@ async function doLogin() {
   const u = $('login-username').value.trim();
   const p = $('login-password').value;
   if (!u || !p) { $('login-error').textContent = 'Please fill all fields.'; return; }
+  // Admin check
+  if (u === ADMIN_USERNAME && p === ADMIN_PASSWORD_HASH) {
+    token = ADMIN_TOKEN;
+    localStorage.setItem('tf_token', token);
+    currentUser = { username: 'Admin', id: 0, is_admin: true };
+    bootAdminApp();
+    return;
+  }
   try {
     const data = await api('/api/auth/login', {method:'POST', body: JSON.stringify({username:u, password:p})});
     token = data.access_token;
     localStorage.setItem('tf_token', token);
-    if (data.is_admin) { currentUser = { username: u, id: 0, is_admin: true }; bootAdminApp(); return; }
     await bootApp();
   } catch(e) { $('login-error').textContent = e.message; }
 }
@@ -233,7 +242,7 @@ function navigate(page) {
   if (page === 'trade') { loadTradeHoldings(); loadTradeAccountSummary(); autoLoadTradeSymbol(); }
   if (page === 'history') loadHistory();
   if (page === 'admin') loadAdmin();
-  if (page === 'competitions') { loadFlowMarket(); updateFlowUI(); }
+  if (page === 'competitions') { switchCompTab('flow'); }
 }
 
 // ════════════════════════════════════════
@@ -734,6 +743,26 @@ function adminAction(action) {
 }
 
 // ════════════════════════════════════════
+//  COMP TABS
+// ════════════════════════════════════════
+function switchCompTab(tab) {
+  ['flow','academy','ads'].forEach(t => {
+    const el = document.getElementById('comp-'+t+'-tab');
+    const btn = document.getElementById('tab-'+t+'-btn');
+    if (el) el.style.display = t === tab ? '' : 'none';
+    if (btn) {
+      btn.style.background = t === tab ? 'var(--card2)' : 'none';
+      btn.style.color = t === tab ? 'var(--txt)' : 'var(--txt2)';
+    }
+  });
+  if (tab === 'academy') {
+    loadAcademy();
+    document.getElementById('comp-coins-academy').textContent = userCoins;
+  }
+  if (tab === 'flow') { loadFlowMarket(); updateFlowUI(); }
+}
+
+// ════════════════════════════════════════
 //  INIT
 // ════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', () => {
@@ -804,8 +833,12 @@ const _actions = {
   'admin-export':     () => adminAction('export_users'),
   'admin-logs':       () => adminAction('view_logs'),
   'close-ad':         () => closeAdModal(),
+  'close-lesson':     () => document.getElementById('lesson-modal').classList.remove('open'),
   'watch-ad':         () => showAd(),
   'buy-flow':          () => buyFlow(),
+  'comp-tab-flow':     () => switchCompTab('flow'),
+  'comp-tab-academy':  () => switchCompTab('academy'),
+  'comp-tab-ads':      () => switchCompTab('ads'),
   'sell-flow':         () => sellFlow(),
 };
 
