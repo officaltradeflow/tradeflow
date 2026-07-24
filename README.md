@@ -2,7 +2,7 @@
 
 Stock trading simulator — real market data, virtual money.
 
-**Live:** https://tradeflow-hjqr.onrender.com
+**Live:** https://tradeflow-y1u6.onrender.com
 
 ## Stack
 - **Backend:** FastAPI + SQLAlchemy
