@@ -820,12 +820,9 @@
           <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between">
             <div>
               <div style="font-family:var(--font-head);font-size:15px;font-weight:700">🪙 Your TradeCoins</div>
-              <div style="font-size:12px;color:var(--txt2);margin-top:3px">Watch ads to earn TC · Max 20 min/day · 10 TC per ad</div>
+              <div style="font-size:12px;color:var(--txt2);margin-top:3px">Complete lessons in Academy to earn TC</div>
             </div>
-            <div style="display:flex;align-items:center;gap:14px">
-              <div style="font-family:var(--font-head);font-size:28px;font-weight:800;color:var(--gold)">🪙 <span id="comp-coins">0</span></div>
-              <button class="btn-primary" data-action="watch-ad" style="width:auto;padding:10px 20px;white-space:nowrap">▶ Watch Ad +10 TC</button>
-            </div>
+            <div style="font-family:var(--font-head);font-size:28px;font-weight:800;color:var(--gold)">🪙 <span id="comp-coins">0</span></div>
           </div>
           <!-- FLOW MARKET -->
           <div class="grid-main">
@@ -883,7 +880,26 @@
               </div>
             </div>
           </div>
-        </div>
+          </div><!-- end comp-flow-tab -->
+
+          <!-- Academy tab -->
+          <div id="comp-academy-tab" style="display:none">
+            <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:18px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                <div>
+                  <div style="font-family:var(--font-head);font-size:16px;font-weight:700">🎓 TradeFlow Academy</div>
+                  <div style="font-size:12px;color:var(--txt2);margin-top:3px" id="academy-progress-text">0/0 lessons</div>
+                </div>
+                <div style="font-family:var(--font-head);font-size:22px;font-weight:800;color:var(--gold)">🪙 <span id="comp-coins-academy">0</span> TC</div>
+              </div>
+              <div style="height:6px;background:var(--border);border-radius:3px">
+                <div id="academy-progress-bar" style="height:100%;background:linear-gradient(90deg,var(--green),var(--blue));border-radius:3px;width:0%;transition:width .4s"></div>
+              </div>
+            </div>
+            <div id="academy-modules"></div>
+          </div>
+
+        </div><!-- end page-competitions -->
 
         <div id="page-admin" style="display:none">
           <div style="background:var(--red-dim);border:1px solid rgba(255,71,87,.2);border-radius:var(--radius);padding:12px 18px;font-size:12px;color:var(--red);margin-bottom:20px">
