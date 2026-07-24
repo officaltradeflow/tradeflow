@@ -499,7 +499,7 @@
       <div class="form-group"><label>Username</label><input type="text" id="login-username" placeholder="Enter your username" /></div>
       <div class="form-group">
         <label>Password</label>
-        <input type="password" id="login-password" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doLogin()" />
+        <input type="password" id="login-password" placeholder="Enter your password" data-enter="do-login" />
       </div>
       <div class="forgot-link"><a data-action="open-forgot">Forgot password?</a></div>
       <div class="hcaptcha-wrap">
@@ -609,7 +609,7 @@
         <div id="page-markets" style="display:none">
           <div class="search-bar">
             <span style="color:var(--txt3)">🔍</span>
-            <input type="text" id="market-search" placeholder="Search stocks… (e.g. AAPL, TSLA)" onkeydown="if(event.key==='Enter')searchMarket()" />
+            <input type="text" id="market-search" placeholder="Search stocks… (e.g. AAPL, TSLA)" data-enter="search-market" />
             <button class="btn-trade buy" style="width:auto;padding:7px 16px;border-radius:7px;font-size:12px" data-action="search-market">Search</button>
           </div>
           <div id="quote-view" style="display:none" class="card mb-18">
@@ -671,7 +671,7 @@
                 <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
                   <input type="text" id="trade-symbol" placeholder="Ticker — e.g. AAPL, TSLA, NVDA"
                     style="flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--txt);padding:11px 14px;border-radius:9px;font-size:14px;font-weight:600;font-family:var(--font-mono);outline:none;text-transform:uppercase;letter-spacing:.5px"
-                    onkeydown="if(event.key==='Enter')lookupTradeSymbol()" oninput="this.value=this.value.toUpperCase()" />
+                    data-enter="lookup-symbol" data-uppercase="true" />
                   <button data-action="lookup-symbol" style="padding:11px 22px;background:var(--blue);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-mono);white-space:nowrap">Look Up →</button>
                 </div>
                 <div id="trade-quick-picks" style="display:flex;gap:5px;flex-wrap:wrap"></div>
@@ -738,7 +738,7 @@
                 </div>
                 <div style="position:relative;margin-bottom:10px">
                   <span id="amt-prefix" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--txt2);font-size:15px;display:none">$</span>
-                  <input type="number" id="trade-qty" placeholder="0" min="0" step="any" oninput="updateOrderSummary()"
+                  <input type="number" id="trade-qty" placeholder="0" min="0" step="any" data-oninput="update-order"
                     style="width:100%;background:var(--bg2);border:2px solid var(--border);color:var(--txt);padding:12px 14px;border-radius:9px;font-size:18px;font-weight:700;font-family:var(--font-mono);outline:none;transition:border-color .2s" />
                 </div>
                 <div style="display:flex;gap:5px;margin-bottom:14px">
@@ -750,14 +750,14 @@
                 <div style="display:flex;gap:7px;margin-bottom:14px">
                   <div style="flex:1">
                     <label style="display:block;font-size:10px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px">Order Type</label>
-                    <select id="trade-order-type" onchange="toggleLimitPrice()" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--txt);padding:9px 11px;border-radius:7px;font-size:12px;font-family:var(--font-mono);outline:none">
+                    <select id="trade-order-type" data-onchange="toggle-limit" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--txt);padding:9px 11px;border-radius:7px;font-size:12px;font-family:var(--font-mono);outline:none">
                       <option value="market">Market</option>
                       <option value="limit">Limit</option>
                     </select>
                   </div>
                   <div id="limit-price-group" style="flex:1;display:none">
                     <label style="display:block;font-size:10px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px">Limit Price</label>
-                    <input type="number" id="limit-price" placeholder="0.00" step="0.01" oninput="updateOrderSummary()" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--txt);padding:9px 11px;border-radius:7px;font-size:12px;font-family:var(--font-mono);outline:none" />
+                    <input type="number" id="limit-price" placeholder="0.00" step="0.01" data-oninput="update-order" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--txt);padding:9px 11px;border-radius:7px;font-size:12px;font-family:var(--font-mono);outline:none" />
                   </div>
                 </div>
                 <div style="background:var(--bg2);border-radius:9px;padding:12px 14px;margin-bottom:13px">
@@ -813,7 +813,6 @@
           <div style="display:flex;gap:4px;background:var(--bg2);border-radius:9px;padding:4px;margin-bottom:18px;width:fit-content">
             <button id="tab-flow-btn" data-action="comp-tab-flow" style="padding:8px 20px;border:none;background:var(--card2);color:var(--txt);border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-mono)">⚡ FLOW Market</button>
             <button id="tab-academy-btn" data-action="comp-tab-academy" style="padding:8px 20px;border:none;background:none;color:var(--txt2);border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-mono)">🎓 Academy</button>
-            <button id="tab-ads-btn" data-action="comp-tab-ads" style="padding:8px 20px;border:none;background:none;color:var(--txt2);border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-mono)">📺 Watch Ads</button>
           </div>
 
           <!-- FLOW Market tab -->
@@ -1010,27 +1009,9 @@
     </div>
   </div>
 </div>
-<script src="/static/ads.js"></script>
 <script src="/static/flow_market.js"></script>
 <script src="/static/lessons.js"></script>
 <script src="/static/app.js"></script>
 
-<!-- AD MODAL -->
-<div class="modal-overlay" id="ad-modal">
-  <div class="modal-box" style="width:420px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <div class="modal-title">🪙 Earn TradeCoins</div>
-      <span style="font-size:18px;font-weight:700;color:var(--txt2)" id="ad-timer"></span>
-    </div>
-    <div id="ad-message" style="min-height:160px"></div>
-    <div style="height:6px;background:var(--border);border-radius:3px;margin:14px 0">
-      <div id="ad-progress-bar" style="height:100%;background:linear-gradient(90deg,var(--green),var(--blue));border-radius:3px;width:0%"></div>
-    </div>
-    <div style="display:flex;gap:10px">
-      <button id="ad-close-btn" class="btn-modal-cancel" style="display:none" data-action="close-ad">Close</button>
-      <button id="ad-claim-btn" class="btn-modal-submit" style="display:none">Claim +10 TC 🪙</button>
-    </div>
-  </div>
-</div>
 </body>
 </html>
