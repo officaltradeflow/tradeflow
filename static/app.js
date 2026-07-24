@@ -746,7 +746,7 @@ function adminAction(action) {
 //  COMP TABS
 // ════════════════════════════════════════
 function switchCompTab(tab) {
-  ['flow','academy','ads'].forEach(t => {
+  ['flow','academy'].forEach(t => {
     const el = document.getElementById('comp-'+t+'-tab');
     const btn = document.getElementById('tab-'+t+'-btn');
     if (el) el.style.display = t === tab ? '' : 'none';
@@ -765,6 +765,27 @@ function switchCompTab(tab) {
 // ════════════════════════════════════════
 //  INIT
 // ════════════════════════════════════════
+
+// Enter key handler
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const el = e.target.closest('[data-enter]');
+  if (el) { const fn = _actions[el.dataset.enter]; if (fn) fn(el); }
+});
+
+// Input handler
+document.addEventListener('input', e => {
+  const el = e.target;
+  if (el.dataset.uppercase) el.value = el.value.toUpperCase();
+  if (el.dataset.oninput) { const fn = _actions[el.dataset.oninput]; if (fn) fn(el); }
+});
+
+// Change handler
+document.addEventListener('change', e => {
+  const el = e.target.closest('[data-onchange]');
+  if (el) { const fn = _actions[el.dataset.onchange]; if (fn) fn(el); }
+});
+
 window.addEventListener('DOMContentLoaded', () => {
   renderLandingMockChart();
   if (token && token !== ADMIN_TOKEN) {
@@ -829,16 +850,15 @@ const _actions = {
   'fill-100':         () => quickFill(100),
   'submit-trade-btn': () => submitTrade(),
   'update-funding':   () => updateFunding(),
+  'update-order':      () => updateOrderSummary(),
+  'toggle-limit':      () => toggleLimitPrice(),
   'admin-cache':      () => adminAction('reset_cache'),
   'admin-export':     () => adminAction('export_users'),
   'admin-logs':       () => adminAction('view_logs'),
-  'close-ad':         () => closeAdModal(),
   'close-lesson':     () => document.getElementById('lesson-modal').classList.remove('open'),
-  'watch-ad':         () => showAd(),
   'buy-flow':          () => buyFlow(),
   'comp-tab-flow':     () => switchCompTab('flow'),
   'comp-tab-academy':  () => switchCompTab('academy'),
-  'comp-tab-ads':      () => switchCompTab('ads'),
   'sell-flow':         () => sellFlow(),
 };
 
