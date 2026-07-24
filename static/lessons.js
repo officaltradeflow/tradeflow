@@ -400,7 +400,7 @@ function openLesson(id) {
     body.innerHTML = `
       <div style="margin-bottom:14px;font-size:13px;color:var(--txt2);line-height:1.7">${lesson.description}</div>
       <div style="position:relative;padding-bottom:56.25%;height:0;border-radius:10px;overflow:hidden;background:#000">
-        <iframe src="https://www.youtube.com/embed/${lesson.videoId}?rel=0&modestbranding=1"
+        <iframe src="https://www.youtube-nocookie.com/embed/${lesson.videoId}?rel=0&modestbranding=1"
           style="position:absolute;top:0;left:0;width:100%;height:100%;border:none"
           allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
         </iframe>
@@ -416,6 +416,29 @@ function openLesson(id) {
     btn.disabled = true;
     btn.style.background = 'var(--card2)';
     btn.style.color = 'var(--txt2)';
+    btn.onclick = null;
+  } else if (lesson.type === 'video') {
+    // Lock button for video duration
+    const waitSecs = lesson.duration * 60;
+    btn.disabled = true;
+    btn.style.background = 'var(--border)';
+    btn.style.color = 'var(--txt2)';
+    btn.onclick = null;
+    let remaining = waitSecs;
+    btn.textContent = `Watch the video to unlock · ${Math.floor(remaining/60)}:${String(remaining%60).padStart(2,'0')} remaining`;
+    const interval = setInterval(() => {
+      remaining--;
+      if (remaining <= 0) {
+        clearInterval(interval);
+        btn.disabled = false;
+        btn.style.background = 'var(--green)';
+        btn.style.color = '#000';
+        btn.textContent = `Complete & Earn +${lesson.tc} TC 🪙`;
+        btn.onclick = () => completeLesson(id, lesson.tc);
+      } else {
+        btn.textContent = `Watch the video to unlock · ${Math.floor(remaining/60)}:${String(remaining%60).padStart(2,'0')} remaining`;
+      }
+    }, 1000);
   } else {
     btn.textContent = `Complete & Earn +${lesson.tc} TC 🪙`;
     btn.disabled = false;
