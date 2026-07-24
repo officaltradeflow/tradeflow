@@ -62,8 +62,8 @@ async def add_security_headers(request: Request, call_next):
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://newassets.hcaptcha.com; "
         "font-src 'self' https://fonts.gstatic.com; "
         "img-src 'self' data: https:; "
-        "connect-src 'self' https://*.hcaptcha.com https://cdn.jsdelivr.net; "
-        "frame-src https://newassets.hcaptcha.com https://js.hcaptcha.com https://www.youtube.com; "
+        "connect-src 'self' https://*.hcaptcha.com https://cdn.jsdelivr.net https://www.youtube.com https://i.ytimg.com; "
+        "frame-src https://newassets.hcaptcha.com https://js.hcaptcha.com https://www.youtube.com https://www.youtube-nocookie.com; "
         "frame-ancestors 'none'"
     )
     return response
