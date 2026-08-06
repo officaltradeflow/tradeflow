@@ -2,7 +2,6 @@ import os
 import asyncio
 import json
 import logging
-from app.api.routes import flow
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
@@ -11,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
 from app.core.config import settings
-from app.api.routes import auth, trading, portfolio, competitions, market_data, admin
+from app.api.routes import auth, trading, portfolio, competitions, market_data, admin, flow
 from app.websocket.connection_manager import ConnectionManager
 from app.services.data_service import DataService
 from app.services.ai_trader import AITrader
@@ -83,6 +82,7 @@ app.include_router(portfolio.router,    prefix="/api/portfolio",    tags=["portf
 app.include_router(competitions.router, prefix="/api/competitions", tags=["competitions"])
 app.include_router(market_data.router,  prefix="/api/market",       tags=["market"])
 app.include_router(admin.router,        prefix="/api/admin",        tags=["admin"])
+app.include_router(flow.router,          prefix="/api/flow",          tags=["flow"])
 
 @app.websocket("/ws/{user_id}")
 async def websocket_endpoint(websocket: WebSocket, user_id: str):
