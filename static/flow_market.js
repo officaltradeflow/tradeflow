@@ -1,103 +1,76 @@
 // ═══════════════════════════════════
-//  FLOW Market Engine
-//  FlowCoin (FLOW) — price driven by user buy/sell
+//  FLOW Market Engine — Backend powered
+//  All prices shared globally via Supabase
 // ═══════════════════════════════════
 
-const FLOW = {
-  symbol: 'FLOW',
-  name: 'FlowCoin',
-  price: parseFloat(localStorage.getItem('flow_price') || '100'),
-  supply: parseFloat(localStorage.getItem('flow_supply') || '1000000'),
-  history: JSON.parse(localStorage.getItem('flow_history') || '[]'),
+let flowPrice = 100;
+let flowShares = 0;
+let flowTCBalance = 0;
+let flowChart = null;
 
-  save() {
-    localStorage.setItem('flow_price', this.price);
-    localStorage.setItem('flow_supply', this.supply);
-    localStorage.setItem('flow_history', JSON.stringify(this.history.slice(-100)));
-  },
-
-  buy(tcAmount) {
-    const shares = tcAmount / this.price;
-    this.price = +(this.price * (1 + (tcAmount / this.supply) * 0.1)).toFixed(4);
-    this.supply += tcAmount;
-    this._record();
-    this.save();
-    return shares;
-  },
-
-  sell(shares) {
-    const tcAmount = shares * this.price;
-    this.price = +(this.price * (1 - (tcAmount / this.supply) * 0.1)).toFixed(4);
-    if (this.price < 1) this.price = 1;
-    this.supply -= tcAmount;
-    this._record();
-    this.save();
-    return tcAmount;
-  },
-
-  _record() {
-    this.history.push({ t: Date.now(), p: this.price });
+async function loadFlowMarket() {
+  try {
+    const [priceData, position] = await Promise.all([
+      api('/api/flow/price'),
+      api('/api/flow/position')
+    ]);
+    flowPrice = priceData.price;
+    flowShares = position.shares;
+    flowTCBalance = position.tc_balance;
+    userCoins = position.tc_balance;
+    localStorage.setItem('tf_coins', userCoins);
+    updateFlowUI();
+    renderFlowChart(priceData.history || []);
+  } catch(e) {
+    console.error('Flow market load error:', e);
   }
-};
-
-// User FLOW holdings
-function getFlowHoldings() {
-  return parseFloat(localStorage.getItem('flow_holdings') || '0');
-}
-function setFlowHoldings(v) {
-  localStorage.setItem('flow_holdings', v);
-}
-
-function loadFlowMarket() {
-  renderFlowChart();
-  updateFlowUI();
 }
 
 function updateFlowUI() {
-  const h = getFlowHoldings();
   const el = id => document.getElementById(id);
-  el('flow-price').textContent = FLOW.price.toFixed(4) + ' TC';
-  el('flow-holdings').textContent = h.toFixed(4) + ' FLOW';
-  el('flow-value').textContent = (h * FLOW.price).toFixed(2) + ' TC';
-  el('comp-coins').textContent = userCoins;
-  if(el('flow-tc-bal')) el('flow-tc-bal').textContent = userCoins + ' TC';
+  if (el('flow-price')) el('flow-price').textContent = parseFloat(flowPrice).toFixed(4) + ' TC';
+  if (el('flow-holdings')) el('flow-holdings').textContent = parseFloat(flowShares).toFixed(4) + ' FLOW';
+  if (el('flow-value')) el('flow-value').textContent = (flowShares * flowPrice).toFixed(2) + ' TC';
+  if (el('flow-tc-bal')) el('flow-tc-bal').textContent = parseFloat(flowTCBalance).toFixed(2) + ' TC';
+  if (el('comp-coins')) el('comp-coins').textContent = Math.floor(flowTCBalance);
   updateCoinsDisplay();
 }
 
-function buyFlow() {
+async function buyFlow() {
   const amt = parseFloat(document.getElementById('flow-amount').value);
   if (!amt || amt <= 0) { toast('Enter TC amount', 'error'); return; }
-  if (amt > userCoins) { toast('Not enough TC', 'error'); return; }
-  const shares = FLOW.buy(amt);
-  userCoins -= amt;
-  localStorage.setItem('tf_coins', userCoins);
-  setFlowHoldings(getFlowHoldings() + shares);
-  updateFlowUI();
-  renderFlowChart();
-  toast(`Bought ${shares.toFixed(4)} FLOW for ${amt} TC`, 'success');
+  try {
+    const result = await api('/api/flow/buy', {
+      method: 'POST',
+      body: JSON.stringify({ amount: amt })
+    });
+    toast(`Bought ${result.shares_bought.toFixed(4)} FLOW for ${amt} TC`, 'success');
+    await loadFlowMarket();
+    document.getElementById('flow-amount').value = '';
+  } catch(e) { toast(e.message, 'error'); }
 }
 
-function sellFlow() {
+async function sellFlow() {
   const shares = parseFloat(document.getElementById('flow-amount').value);
   if (!shares || shares <= 0) { toast('Enter FLOW amount', 'error'); return; }
-  if (shares > getFlowHoldings()) { toast('Not enough FLOW', 'error'); return; }
-  const tc = FLOW.sell(shares);
-  userCoins += tc;
-  localStorage.setItem('tf_coins', userCoins);
-  setFlowHoldings(getFlowHoldings() - shares);
-  updateFlowUI();
-  renderFlowChart();
-  toast(`Sold ${shares.toFixed(4)} FLOW for ${tc.toFixed(2)} TC`, 'success');
+  try {
+    const result = await api('/api/flow/sell', {
+      method: 'POST',
+      body: JSON.stringify({ amount: shares })
+    });
+    toast(`Sold ${shares.toFixed(4)} FLOW for ${result.tc_received.toFixed(2)} TC`, 'success');
+    await loadFlowMarket();
+    document.getElementById('flow-amount').value = '';
+  } catch(e) { toast(e.message, 'error'); }
 }
 
-let flowChart = null;
-function renderFlowChart() {
+function renderFlowChart(history) {
   const ctx = document.getElementById('flow-chart')?.getContext('2d');
   if (!ctx) return;
-  const history = FLOW.history.slice(-50);
   if (flowChart) flowChart.destroy();
-  const prices = history.map(h => h.p);
+  const prices = history.map(h => h.price);
   const labels = history.map(h => new Date(h.t).toLocaleTimeString());
+  if (!prices.length) { prices.push(flowPrice); labels.push('Now'); }
   const up = prices.length < 2 || prices[prices.length-1] >= prices[0];
   const color = up ? '#00e09e' : '#ff4757';
   flowChart = new Chart(ctx, {
