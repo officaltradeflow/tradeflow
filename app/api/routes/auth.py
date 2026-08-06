@@ -1,15 +1,15 @@
 import os
-import hmac
 import hashlib
+import hmac
 import logging
 from datetime import datetime, timedelta
 from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.orm import Session
-from pydantic import BaseModel
 from jose import jwt, JWTError
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+import httpx
 
 from app.database.database import get_db
 from app.database.models import User
@@ -20,7 +20,9 @@ router = APIRouter()
 security = HTTPBearer()
 
 SALT = "tradeflow_salt_2025"
-ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "")
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "x7k_maple_29")
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+FROM_EMAIL = os.getenv("FROM_EMAIL", "noreply@tradeflow.app")
 
 
 class RegisterRequest(BaseModel):
@@ -81,6 +83,35 @@ def get_current_user(
     return user
 
 
+async def send_reset_email(email: str, username: str, reset_token: str):
+    if not RESEND_API_KEY:
+        logger.warning("RESEND_API_KEY not set — email not sent")
+        return
+    reset_link = f"https://tradeflow-y1u6.onrender.com/reset?token={reset_token}"
+    html = f"""
+    <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0d1120;color:#e8edf8;border-radius:12px">
+      <div style="font-size:28px;font-weight:800;color:#00e09e;margin-bottom:8px">TradeFlow</div>
+      <h2 style="margin-bottom:16px">Password Reset Request</h2>
+      <p style="color:#6b7fa3">Hi {username}, we received a request to reset your password.</p>
+      <a href="{reset_link}" style="display:inline-block;margin:20px 0;padding:12px 28px;background:#00e09e;color:#000;font-weight:700;border-radius:8px;text-decoration:none">Reset Password</a>
+      <p style="color:#6b7fa3;font-size:12px">This link expires in 1 hour. If you didn't request this, ignore this email.</p>
+    </div>"""
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                "https://api.resend.com/emails",
+                headers={"Authorization": f"Bearer {RESEND_API_KEY}", "Content-Type": "application/json"},
+                json={"from": FROM_EMAIL, "to": email, "subject": "TradeFlow — Reset your password", "html": html},
+                timeout=10
+            )
+            if resp.status_code == 200:
+                logger.info("Reset email sent to %s", email)
+            else:
+                logger.error("Resend error: %s", resp.text)
+    except Exception as e:
+        logger.error("Email send failed: %s", e)
+
+
 @router.post("/register", response_model=UserResponse, status_code=201)
 def register(req: RegisterRequest, db: Session = Depends(get_db)):
     if len(req.username) < 3:
@@ -91,15 +122,12 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
         raise HTTPException(400, "Username already taken")
     if db.query(User).filter(User.email == req.email).first():
         raise HTTPException(400, "Email already registered")
-    user = User(
-        username=req.username,
-        email=req.email,
-        hashed_password=hash_password(req.password),
-        full_name=req.full_name or "",
-    )
+    user = User(username=req.username, email=req.email,
+                hashed_password=hash_password(req.password), full_name=req.full_name or "")
     db.add(user); db.commit(); db.refresh(user)
     logger.info("New user: %s", req.username)
     return user
+
 
 @router.post("/login", response_model=TokenResponse)
 def login(req: LoginRequest, db: Session = Depends(get_db)):
@@ -111,13 +139,17 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
     token = create_access_token({"sub": str(user.id)})
     return {"access_token": token, "is_admin": req.username == ADMIN_USERNAME}
 
+
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user)):
     return current_user
 
+
 @router.post("/forgot-password")
-def forgot_password(req: ForgotPasswordRequest, db: Session = Depends(get_db)):
+async def forgot_password(req: ForgotPasswordRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == req.email).first()
     if user:
-        logger.info("Password reset requested: %s", req.email)
-    return {"message": "If an account with that email exists, a reset link has been sent."}
+        reset_token = create_access_token({"sub": str(user.id), "type": "reset"})
+        await send_reset_email(user.email, user.username, reset_token)
+        logger.info("Password reset sent: %s", req.email)
+    return {"message": "If an account exists with that email, a reset link has been sent."}
