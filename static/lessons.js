@@ -450,10 +450,17 @@ function openLesson(id) {
   document.getElementById('lesson-modal').classList.add('open');
 }
 
-function completeLesson(id, tc) {
+async function completeLesson(id, tc) {
   markLessonComplete(id);
-  userCoins += tc;
-  localStorage.setItem('tf_coins', userCoins);
+  try {
+    const result = await api(`/api/flow/award?amount=${tc}`, { method: 'POST' });
+    userCoins = result.tc_balance;
+    localStorage.setItem('tf_coins', userCoins);
+  } catch(e) {
+    // Fallback to localStorage if backend fails
+    userCoins += tc;
+    localStorage.setItem('tf_coins', userCoins);
+  }
   updateCoinsDisplay();
   document.getElementById('lesson-modal').classList.remove('open');
   loadAcademy();
