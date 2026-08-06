@@ -424,21 +424,39 @@ function openLesson(id) {
     btn.style.background = 'var(--border)';
     btn.style.color = 'var(--txt2)';
     btn.onclick = null;
-    let remaining = waitSecs;
-    btn.textContent = `Watch the video to unlock · ${Math.floor(remaining/60)}:${String(remaining%60).padStart(2,'0')} remaining`;
-    const interval = setInterval(() => {
-      remaining--;
-      if (remaining <= 0) {
-        clearInterval(interval);
-        btn.disabled = false;
-        btn.style.background = 'var(--green)';
-        btn.style.color = '#000';
-        btn.textContent = `Complete & Earn +${lesson.tc} TC 🪙`;
-        btn.onclick = () => completeLesson(id, lesson.tc);
-      } else {
-        btn.textContent = `Watch the video to unlock · ${Math.floor(remaining/60)}:${String(remaining%60).padStart(2,'0')} remaining`;
+    btn.textContent = `▶ Press play on the video to start timer`;
+
+    // Listen for iframe interaction (user clicks play)
+    const iframe = document.querySelector('#lesson-modal-body iframe');
+    let timerStarted = false;
+
+    function startVideoTimer() {
+      if (timerStarted) return;
+      timerStarted = true;
+      let remaining = waitSecs;
+      btn.textContent = `${Math.floor(remaining/60)}:${String(remaining%60).padStart(2,'0')} remaining — keep watching`;
+      const interval = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+          clearInterval(interval);
+          btn.disabled = false;
+          btn.style.background = 'var(--green)';
+          btn.style.color = '#000';
+          btn.textContent = `Complete & Earn +${lesson.tc} TC 🪙`;
+          btn.onclick = () => completeLesson(id, lesson.tc);
+        } else {
+          btn.textContent = `${Math.floor(remaining/60)}:${String(remaining%60).padStart(2,'0')} remaining — keep watching`;
+        }
+      }, 1000);
+    }
+
+    // Start timer when user clicks on the iframe (plays video)
+    window.addEventListener('blur', function onBlur() {
+      if (document.activeElement === iframe) {
+        startVideoTimer();
+        window.removeEventListener('blur', onBlur);
       }
-    }, 1000);
+    });
   } else {
     btn.textContent = `Complete & Earn +${lesson.tc} TC 🪙`;
     btn.disabled = false;
