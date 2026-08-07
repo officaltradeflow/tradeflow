@@ -16,4 +16,4 @@ os.chdir(project_home)
 from app.main import app  # noqa: E402
 
 application = app
-logger.info("TradeFlow v2.0.0 started on PythonAnywhere")
+logger.info("Traidable v2.0.0 started on PythonAnywhere")
