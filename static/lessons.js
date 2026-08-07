@@ -1,7 +1,7 @@
 // ═══════════════════════════════════
-//  TradeFlow Academy — Lesson Library
+//  Traidable Academy — Lesson Library
 //  Text lessons + Video lessons
-//  Original content © TradeFlow
+//  Original content © Traidable
 // ═══════════════════════════════════
 
 const LESSONS = [
