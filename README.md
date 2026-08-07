@@ -1,8 +1,8 @@
-# TradeFlow v2.0.0
+# Traidable v2.0.0
 
 Stock trading simulator — real market data, virtual money.
 
-**Live:** https://tradeflow-y1u6.onrender.com
+**Live:** https://Traidable-y1u6.onrender.com
 
 ## Stack
 - **Backend:** FastAPI + SQLAlchemy
@@ -14,7 +14,7 @@ Stock trading simulator — real market data, virtual money.
 
 ### 1. Clone & install
 ```bash
-git clone https://github.com/officaltradeflow/tradeflow
+git clone https://github.com/officalTraidable/Traidable
 pip install -r requirements.txt
 ```
 
