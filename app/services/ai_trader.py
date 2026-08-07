@@ -1,5 +1,5 @@
 """
-TradeFlow AI Trader
+Traidable AI Trader
 -------------------
 Runs as a background service that:
 1. Registers itself as a user if not already registered
@@ -17,10 +17,10 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s  %(levelname)-8s  %(
 logger = logging.getLogger("ai_trader")
 
 # ── Config ────────────────────────────────────────────────────────────────────
-BASE_URL = "https://tradeflow-y1u6.onrender.com"
+BASE_URL = "https://Traidable-y1u6.onrender.com"
 
 AI_USERNAME = os.getenv("BOT_USERNAME", "tf_market_bot")
-AI_EMAIL    = os.getenv("BOT_EMAIL", "bot@tradeflow.internal")
+AI_EMAIL    = os.getenv("BOT_EMAIL", "bot@Traidable.internal")
 AI_PASSWORD = os.getenv("BOT_PASSWORD", "")
 AI_NAME     = "TF Market Bot"
 
