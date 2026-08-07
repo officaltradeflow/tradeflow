@@ -19,10 +19,10 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 security = HTTPBearer()
 
-SALT = "tradeflow_salt_2025"
+SALT = "Traidable_salt_2025"
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "x7k_maple_29")
 RESEND_API_KEY = os.getenv("RESEND_API_KEY")
-FROM_EMAIL = os.getenv("FROM_EMAIL", "noreply@tradeflow.app")
+FROM_EMAIL = os.getenv("FROM_EMAIL", "noreply@Traidable.app")
 
 
 class RegisterRequest(BaseModel):
@@ -87,10 +87,10 @@ async def send_reset_email(email: str, username: str, reset_token: str):
     if not RESEND_API_KEY:
         logger.warning("RESEND_API_KEY not set — email not sent")
         return
-    reset_link = f"https://tradeflow-y1u6.onrender.com/reset?token={reset_token}"
+    reset_link = f"https://Traidable-y1u6.onrender.com/reset?token={reset_token}"
     html = f"""
     <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0d1120;color:#e8edf8;border-radius:12px">
-      <div style="font-size:28px;font-weight:800;color:#00e09e;margin-bottom:8px">TradeFlow</div>
+      <div style="font-size:28px;font-weight:800;color:#00e09e;margin-bottom:8px">Traidable</div>
       <h2 style="margin-bottom:16px">Password Reset Request</h2>
       <p style="color:#6b7fa3">Hi {username}, we received a request to reset your password.</p>
       <a href="{reset_link}" style="display:inline-block;margin:20px 0;padding:12px 28px;background:#00e09e;color:#000;font-weight:700;border-radius:8px;text-decoration:none">Reset Password</a>
@@ -101,7 +101,7 @@ async def send_reset_email(email: str, username: str, reset_token: str):
             resp = await client.post(
                 "https://api.resend.com/emails",
                 headers={"Authorization": f"Bearer {RESEND_API_KEY}", "Content-Type": "application/json"},
-                json={"from": FROM_EMAIL, "to": email, "subject": "TradeFlow — Reset your password", "html": html},
+                json={"from": FROM_EMAIL, "to": email, "subject": "Traidable — Reset your password", "html": html},
                 timeout=10
             )
             if resp.status_code == 200:
