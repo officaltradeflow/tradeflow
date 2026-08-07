@@ -34,14 +34,14 @@ async def run_ai_trader():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("TradeFlow starting up…")
+    logger.info("Traidable starting up…")
     asyncio.create_task(data_service.start_real_time_data(connection_manager))
     asyncio.create_task(run_ai_trader())
     yield
-    logger.info("TradeFlow shutting down.")
+    logger.info("Traidable shutting down.")
 
 app = FastAPI(
-    title="TradeFlow API",
+    title="Traidable API",
     description="Stock trading simulator",
     version="2.0.0",
     lifespan=lifespan,
@@ -114,11 +114,11 @@ if os.path.isdir(_static):
 @app.get("/")
 async def root():
     f = os.path.join(_static, "index.html")
-    return FileResponse(f) if os.path.isfile(f) else {"message": "TradeFlow API"}
+    return FileResponse(f) if os.path.isfile(f) else {"message": "Traidable API"}
 
 @app.get("/{full_path:path}")
 async def spa(full_path: str):
     if any(full_path.startswith(p) for p in ["api/", "static/", "ws"]):
         from fastapi import HTTPException; raise HTTPException(404)
     f = os.path.join(_static, "index.html")
-    return FileResponse(f) if os.path.isfile(f) else {"message": "TradeFlow API"}
+    return FileResponse(f) if os.path.isfile(f) else {"message": "Traidable API"}
