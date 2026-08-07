@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings
 from typing import Optional
 
 class Settings(BaseSettings):
-    DATABASE_URL: str = "sqlite:///./tradeflow.db"
+    DATABASE_URL: str = "sqlite:///./Traidable.db"
     ALPHA_VANTAGE_API_KEY: Optional[str] = None
     FMP_API_KEY: Optional[str] = None
     NEWS_API_KEY: Optional[str] = None
